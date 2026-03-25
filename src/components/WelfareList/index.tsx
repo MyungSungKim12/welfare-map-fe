@@ -3,16 +3,15 @@
 import { useState } from 'react';
 import WelfareCard from '@/components/WelfareCard';
 import { WelfareItem } from '@/types/welfare';
-import { ListWrapper, ListHeader, EmptyState } from './WelfareList.style';
+import { ListWrapper, ListHeader, ViewToggle, ViewBtn, EmptyState } from './WelfareList.style';
 
-// 임시 더미 데이터 (추후 API 연동)
 const DUMMY_DATA: WelfareItem[] = [
   {
     id: '1',
     title: '인천시 어르신 무료 건강검진 지원',
     category: '의료',
     target: '만 65세 이상',
-    period: '2026.01 ~ 2026.12',
+    period: '2026.01 ~ 12',
     region: '인천 미추홀구',
     summary: '만 65세 이상 어르신을 대상으로 기본 건강검진 및 치과 검진을 무료로 지원합니다.',
     link: '#',
@@ -22,7 +21,7 @@ const DUMMY_DATA: WelfareItem[] = [
     title: '신혼부부 전세자금 대출 이자 지원',
     category: '주거',
     target: '신혼부부',
-    period: '2026.03 ~ 2026.12',
+    period: '2026.03 ~ 12',
     region: '인천 미추홀구',
     summary: '혼인 7년 이내 신혼부부를 대상으로 전세자금 대출 이자의 일부를 지원합니다.',
     link: '#',
@@ -32,7 +31,7 @@ const DUMMY_DATA: WelfareItem[] = [
     title: '청년 취업 준비금 지원',
     category: '취업',
     target: '만 19~34세 청년',
-    period: '2026.02 ~ 2026.06',
+    period: '2026.02 ~ 06',
     region: '인천 미추홀구',
     summary: '구직 활동 중인 청년에게 교통비, 자격증 응시료 등 취업 준비에 필요한 비용을 지원합니다.',
     link: '#',
@@ -51,6 +50,7 @@ const DUMMY_DATA: WelfareItem[] = [
 
 export default function WelfareList() {
   const [savedIds, setSavedIds] = useState<string[]>([]);
+  const [viewMode, setViewMode] = useState<'list' | 'map'>('list');
 
   const handleSave = (id: string) => {
     setSavedIds((prev) =>
@@ -64,6 +64,14 @@ export default function WelfareList() {
         <p className="result_count">
           총 <span>{DUMMY_DATA.length}건</span>의 복지 서비스
         </p>
+        <ViewToggle>
+          <ViewBtn $active={viewMode === 'list'} onClick={() => setViewMode('list')}>
+            목록 보기
+          </ViewBtn>
+          <ViewBtn $active={viewMode === 'map'} onClick={() => setViewMode('map')}>
+            지도 보기
+          </ViewBtn>
+        </ViewToggle>
       </ListHeader>
 
       {DUMMY_DATA.length === 0 ? (

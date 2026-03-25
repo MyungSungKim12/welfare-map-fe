@@ -2,69 +2,105 @@
 
 import styled from 'styled-components';
 
-export const FilterWrapper = styled.section`
-  width: 100%;
-  background: #ffffff;
-  padding: 2rem 2.4rem;
-  border-bottom: 1px solid rgba(0, 0, 0, 0.06);
-`;
-
-export const FilterTitle = styled.p`
-  font-size: 1.3rem;
-  font-weight: 500;
-  color: #888;
-  margin-bottom: 1.2rem;
-  letter-spacing: 0.05em;
-`;
-
-export const FilterGroup = styled.div`
+export const FilterWrapper = styled.div`
   display: flex;
   flex-direction: column;
-  gap: 1rem;
+  gap: 1.6rem;
 `;
 
-export const FilterRow = styled.div`
-  display: flex;
-  align-items: center;
-  gap: 0.8rem;
-  flex-wrap: wrap;
+export const LocationCard = styled.div`
+  background: #1B3A4B;
+  border-radius: 14px;
+  padding: 2rem;
+  color: #ffffff;
 
-  .row_label {
+  .loc_label {
     font-size: 1.3rem;
-    color: #555;
-    min-width: 40px;
-    font-weight: 500;
+    color: rgba(255,255,255,0.55);
+    margin-bottom: 0.6rem;
+  }
+
+  .loc_value {
+    font-size: 1.8rem;
+    font-weight: 700;
+    margin-bottom: 1rem;
+  }
+
+  .loc_change {
+    font-size: 1.3rem;
+    color: #4DD9AC;
+    cursor: pointer;
+    text-decoration: underline;
   }
 `;
 
-export const FilterChip = styled.button<{ $active: boolean }>`
+export const FilterCard = styled.div`
+  background: #ffffff;
+  border-radius: 14px;
+  border: 1px solid #EDE8E0;
+  padding: 2rem;
+`;
+
+export const FilterCardTitle = styled.p`
+  font-size: 1.3rem;
+  font-weight: 600;
+  color: #8A7F72;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  margin-bottom: 1.8rem;
+`;
+
+export const FilterSection = styled.div`
+  margin-bottom: 1.8rem;
+
+  &:last-child { margin-bottom: 0; }
+
+  .filter_label {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: #1B2D38;
+    margin-bottom: 1rem;
+  }
+`;
+
+export const ChipGrid = styled.div`
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.7rem;
+`;
+
+export const Chip = styled.button<{ $active: boolean }>`
   padding: 0.7rem 1.4rem;
-  border-radius: 999px;
-  border: 1px solid ${({ $active }) => $active ? '#2B5CE6' : '#E0E0E0'};
-  background: ${({ $active }) => $active ? '#2B5CE6' : '#ffffff'};
-  color: ${({ $active }) => $active ? '#ffffff' : '#555'};
+  border-radius: 8px;
+  border: 1.5px solid ${({ $active }) => $active ? '#1B3A4B' : '#D5CEC4'};
+  background: ${({ $active }) => $active ? '#1B3A4B' : '#ffffff'};
+  color: ${({ $active }) => $active ? '#ffffff' : '#6B6058'};
   font-size: 1.4rem;
-  font-weight: ${({ $active }) => $active ? '500' : '400'};
+  font-weight: ${({ $active }) => $active ? '600' : '400'};
   cursor: pointer;
   transition: all 0.2s ease;
 
   &:hover {
-    border-color: #2B5CE6;
-    color: ${({ $active }) => $active ? '#ffffff' : '#2B5CE6'};
+    border-color: #1B3A4B;
+    color: ${({ $active }) => $active ? '#ffffff' : '#1B3A4B'};
   }
 `;
 
 export const ResetButton = styled.button`
-  margin-left: auto;
-  padding: 0.6rem 1.2rem;
-  border: none;
-  background: none;
-  color: #999;
-  font-size: 1.3rem;
+  width: 100%;
+  margin-top: 1.6rem;
+  padding: 1.1rem;
+  border: 1.5px solid #D5CEC4;
+  border-radius: 8px;
+  background: #ffffff;
+  color: #8A7F72;
+  font-size: 1.4rem;
+  font-weight: 500;
   cursor: pointer;
-  text-decoration: underline;
+  transition: all 0.2s;
 
   &:hover {
-    color: #555;
+    border-color: #1B3A4B;
+    color: #1B3A4B;
   }
 `;
