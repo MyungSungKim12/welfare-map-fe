@@ -8,8 +8,8 @@ import {
 } from './Filter.style';
 
 export default function Filter() {
-  const [ageGroup, setAgeGroup] = useState(DEFAULT_FILTER.ageGroup);
-  const [situation, setSituation] = useState(DEFAULT_FILTER.situation);
+  const [ageGroup, setAgeGroup] = useState<string>(DEFAULT_FILTER.ageGroup);
+  const [situation, setSituation] = useState<string>(DEFAULT_FILTER.situation);
 
   const handleReset = () => {
     setAgeGroup('all');
