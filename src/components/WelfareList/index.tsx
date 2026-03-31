@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import WelfareCard from '@/components/WelfareCard';
 import { WelfareItem } from '@/types/welfare';
-import { ListWrapper, ListHeader, ViewToggle, ViewBtn, EmptyState } from './WelfareList.style';
+import { ListWrapper, ListHeader, EmptyState } from './WelfareList.style';
 
 const DUMMY_DATA: WelfareItem[] = [
   {
@@ -50,7 +50,6 @@ const DUMMY_DATA: WelfareItem[] = [
 
 export default function WelfareList() {
   const [savedIds, setSavedIds] = useState<string[]>([]);
-  const [viewMode, setViewMode] = useState<'list' | 'map'>('list');
 
   const handleSave = (id: string) => {
     setSavedIds((prev) =>
@@ -64,14 +63,6 @@ export default function WelfareList() {
         <p className="result_count">
           총 <span>{DUMMY_DATA.length}건</span>의 복지 서비스
         </p>
-        <ViewToggle>
-          <ViewBtn $active={viewMode === 'list'} onClick={() => setViewMode('list')}>
-            목록 보기
-          </ViewBtn>
-          <ViewBtn $active={viewMode === 'map'} onClick={() => setViewMode('map')}>
-            지도 보기
-          </ViewBtn>
-        </ViewToggle>
       </ListHeader>
 
       {DUMMY_DATA.length === 0 ? (
