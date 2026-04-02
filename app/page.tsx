@@ -8,6 +8,7 @@ import Filter from '@/components/Filter';
 import WelfareList from '@/components/WelfareList';
 import Statistics from '@/components/Statistics';
 import Footer from '@/components/Footer';
+import WelfareSection from '@/components/WelfareSection';
 
 export default function Home() {
   return (
@@ -17,28 +18,7 @@ export default function Home() {
       <LifeStage />
       <NoticeBanner />
       <PopularList />
-
-      {/* 지도 섹션 */}
-      <section style={{ maxWidth: '1280px', margin: '0 auto', padding: '4rem 2rem 0' }}>
-        <Map />
-      </section>
-
-      {/* 필터 + 리스트 섹션 */}
-      <section style={{
-        display: 'flex',
-        maxWidth: '1280px',
-        margin: '0 auto',
-        padding: '2rem 2rem 4rem',
-        gap: '2.8rem',
-      }}>
-        <aside style={{ width: '280px', flexShrink: 0 }}>
-          <Filter />
-        </aside>
-        <div style={{ flex: 1, minWidth: 0 }}>
-          <WelfareList />
-        </div>
-      </section>
-
+      <WelfareSection />
       <Statistics />
       <Footer />
     </main>

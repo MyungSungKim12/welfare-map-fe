@@ -1,27 +1,31 @@
 'use client';
 
-import { useState } from 'react';
 import { AGE_GROUP_OPTIONS, SITUATION_OPTIONS, DEFAULT_FILTER } from '@/constants/data';
+import { FilterType } from '@/types/welfare';
+import { LocationInfo } from '@/hooks/useLocation';
 import {
   FilterWrapper, LocationCard, FilterCard, FilterCardTitle,
   FilterSection, ChipGrid, Chip, ResetButton,
 } from './Filter.style';
 
-export default function Filter() {
-  const [ageGroup, setAgeGroup] = useState<string>(DEFAULT_FILTER.ageGroup);
-  const [situation, setSituation] = useState<string>(DEFAULT_FILTER.situation);
+interface Props {
+  filter: FilterType;
+  onFilterChange: (filter: FilterType) => void;
+  location: LocationInfo;
+  onLocationClick: () => void;
+}
 
-  const handleReset = () => {
-    setAgeGroup('all');
-    setSituation('all');
-  };
+export default function Filter({ filter, onFilterChange, location, onLocationClick }: Props) {
+  const handleReset = () => onFilterChange({ ...DEFAULT_FILTER });
 
   return (
     <FilterWrapper>
       <LocationCard>
         <p className="loc_label">현재 위치</p>
-        <p className="loc_value">인천 미추홀구</p>
-        <span className="loc_change">위치 변경하기 →</span>
+        <p className="loc_value">{location.sigunguName}</p>
+        <span className="loc_change" onClick={onLocationClick}>
+          위치 변경하기 →
+        </span>
       </LocationCard>
 
       <FilterCard>
@@ -33,8 +37,8 @@ export default function Filter() {
             {AGE_GROUP_OPTIONS.map((opt) => (
               <Chip
                 key={opt.value}
-                $active={ageGroup === opt.value}
-                onClick={() => setAgeGroup(opt.value)}
+                $active={filter.ageGroup === opt.value}
+                onClick={() => onFilterChange({ ...filter, ageGroup: opt.value })}
               >
                 {opt.label}
               </Chip>
@@ -48,8 +52,8 @@ export default function Filter() {
             {SITUATION_OPTIONS.map((opt) => (
               <Chip
                 key={opt.value}
-                $active={situation === opt.value}
-                onClick={() => setSituation(opt.value)}
+                $active={filter.situation === opt.value}
+                onClick={() => onFilterChange({ ...filter, situation: opt.value })}
               >
                 {opt.label}
               </Chip>

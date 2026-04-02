@@ -6,6 +6,11 @@ import {
   MapWrapper, MapContainer, MapControls, MapControlBtn,
   MyLocationBtn, LoadingOverlay, MarkerInfoBox,
 } from './Map.style';
+import { LocationInfo } from '@/hooks/useLocation';
+
+interface Props {
+  location?: LocationInfo;
+}
 
 const DUMMY_MARKERS: WelfareMarker[] = [
   { id: '1', name: '미추홀구 노인복지관',           lat: 37.4563, lng: 126.7052, category: '노인',   address: '인천 미추홀구 매소홀로 388' },
@@ -27,12 +32,19 @@ declare global {
   interface Window { kakao: any; }
 }
 
-export default function Map() {
+export default function Map({ location }: Props) {
   const mapContainerRef = useRef<HTMLDivElement>(null);
   const mapRef          = useRef<any>(null);
   const [isLoaded,       setIsLoaded]       = useState(false);
   const [isLocating,     setIsLocating]     = useState(false);
   const [selectedMarker, setSelectedMarker] = useState<WelfareMarker | null>(null);
+
+  useEffect(() => {
+    if (!mapRef.current || !location?.lat || !location?.lng) return;
+    const pos = new window.kakao.maps.LatLng(location.lat, location.lng);
+    mapRef.current.setCenter(pos);
+    mapRef.current.setLevel(6);
+  }, [location?.lat, location?.lng]);
 
   // ── 지도 + 마커 생성 ──────────────────────────────────
   const buildMap = useCallback(() => {

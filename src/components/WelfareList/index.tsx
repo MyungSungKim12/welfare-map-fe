@@ -3,8 +3,14 @@
 import WelfareCard from '@/components/WelfareCard';
 import { ListWrapper, ListHeader, EmptyState } from './WelfareList.style';
 import { useWelfareData } from '@/hooks/useWelfareData';
+import { FilterType } from '@/types/welfare';
+import { LocationInfo } from '@/hooks/useLocation';
 
-// 스켈레톤 로딩 UI
+interface Props {
+  filter?: FilterType;
+  location?: LocationInfo;
+}
+
 function SkeletonCard() {
   return (
     <div style={{
@@ -30,8 +36,8 @@ function SkeletonCard() {
   );
 }
 
-export default function WelfareList() {
-  const { items, isLoading, error, refetch } = useWelfareData();
+export default function WelfareList({ filter, location }: Props) {
+  const { items, isLoading, error, refetch } = useWelfareData(filter, location);
 
   return (
     <>
@@ -52,14 +58,12 @@ export default function WelfareList() {
           </p>
         </ListHeader>
 
-        {/* 로딩 */}
         {isLoading && (
           <div style={{ display: 'flex', flexDirection: 'column', gap: '1.4rem' }}>
             {[1, 2, 3].map((n) => <SkeletonCard key={n} />)}
           </div>
         )}
 
-        {/* 에러 */}
         {!isLoading && error && (
           <EmptyState>
             <span className="empty_icon">⚠️</span>
@@ -84,7 +88,6 @@ export default function WelfareList() {
           </EmptyState>
         )}
 
-        {/* 데이터 없음 */}
         {!isLoading && !error && items.length === 0 && (
           <EmptyState>
             <span className="empty_icon">🔍</span>
@@ -95,7 +98,6 @@ export default function WelfareList() {
           </EmptyState>
         )}
 
-        {/* 복지 카드 목록 */}
         {!isLoading && !error && items.map((item) => (
           <WelfareCard
             key={item.id}
