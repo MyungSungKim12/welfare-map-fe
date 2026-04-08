@@ -1,24 +1,17 @@
 'use client';
 
 import { useEffect, useRef, useState, useCallback } from 'react';
-import { WelfareMarker } from '@/types/welfare';
+import { WelfareItem } from '@/types/welfare';
+import { LocationInfo } from '@/hooks/useLocation';
 import {
   MapWrapper, MapContainer, MapControls, MapControlBtn,
   MyLocationBtn, LoadingOverlay, MarkerInfoBox,
 } from './Map.style';
-import { LocationInfo } from '@/hooks/useLocation';
 
 interface Props {
   location?: LocationInfo;
+  items?: WelfareItem[];
 }
-
-const DUMMY_MARKERS: WelfareMarker[] = [
-  { id: '1', name: '미추홀구 노인복지관',           lat: 37.4563, lng: 126.7052, category: '노인',   address: '인천 미추홀구 매소홀로 388' },
-  { id: '2', name: '인천 장애인 종합복지관',         lat: 37.4601, lng: 126.7120, category: '장애인', address: '인천 미추홀구 소성로163번길 33' },
-  { id: '3', name: '미추홀구 건강가정지원센터',       lat: 37.4520, lng: 126.7080, category: '가족',   address: '인천 미추홀구 학익소로 50' },
-  { id: '4', name: '인천남부 고용복지플러스센터',     lat: 37.4490, lng: 126.7010, category: '취업',   address: '인천 미추홀구 인주대로 321' },
-  { id: '5', name: '미추홀구 육아종합지원센터',       lat: 37.4580, lng: 126.6990, category: '영유아', address: '인천 미추홀구 경인로 287' },
-];
 
 const CATEGORY_COLOR: Record<string, string> = {
   '노인':   '#1B3A4B',
@@ -26,53 +19,54 @@ const CATEGORY_COLOR: Record<string, string> = {
   '가족':   '#2E9E7A',
   '취업':   '#F59E0B',
   '영유아': '#EC4899',
+  '기타':   '#6B7280',
 };
 
 declare global {
   interface Window { kakao: any; }
 }
 
-export default function Map({ location }: Props) {
+export default function Map({ location, items = [] }: Props) {
   const mapContainerRef = useRef<HTMLDivElement>(null);
   const mapRef          = useRef<any>(null);
+  const overlaysRef     = useRef<any[]>([]);
   const [isLoaded,       setIsLoaded]       = useState(false);
   const [isLocating,     setIsLocating]     = useState(false);
-  const [selectedMarker, setSelectedMarker] = useState<WelfareMarker | null>(null);
+  const [selectedItem,   setSelectedItem]   = useState<WelfareItem | null>(null);
 
-  useEffect(() => {
-    if (!mapRef.current || !location?.lat || !location?.lng) return;
-    const pos = new window.kakao.maps.LatLng(location.lat, location.lng);
-    mapRef.current.setCenter(pos);
-    mapRef.current.setLevel(6);
-  }, [location?.lat, location?.lng]);
+  // ── 마커 생성 ─────────────────────────────────────────
+  const drawMarkers = useCallback((map: any, welfareItems: WelfareItem[]) => {
+    overlaysRef.current.forEach((o) => o.setMap(null));
+    overlaysRef.current = [];
 
-  // ── 지도 + 마커 생성 ──────────────────────────────────
-  const buildMap = useCallback(() => {
-    if (!mapContainerRef.current || mapRef.current) return;
+    if (welfareItems.length === 0) return;
 
-    const map = new window.kakao.maps.Map(mapContainerRef.current, {
-      center: new window.kakao.maps.LatLng(37.4563, 126.7052),
-      level: 5,
-    });
-    mapRef.current = map;
+    const center  = map.getCenter();
+    const baseLat = center.getLat();
+    const baseLng = center.getLng();
 
-    DUMMY_MARKERS.forEach((item) => {
-      const position = new window.kakao.maps.LatLng(item.lat, item.lng);
-      const color    = CATEGORY_COLOR[item.category] ?? '#2E9E7A';
+    welfareItems.slice(0, 30).forEach((item, i) => {
+      const angle  = (i / Math.min(welfareItems.length, 30)) * 2 * Math.PI;
+      const radius = 0.005 + (i % 5) * 0.003;
+      const lat    = baseLat + Math.sin(angle) * radius;
+      const lng    = baseLng + Math.cos(angle) * radius;
 
-      new window.kakao.maps.CustomOverlay({
+      const position = new window.kakao.maps.LatLng(lat, lng);
+      const color    = CATEGORY_COLOR[item.category] ?? '#6B7280';
+
+      const overlay = new window.kakao.maps.CustomOverlay({
         map,
         position,
         yAnchor: 1.4,
         content: `
-          <div style="
+          <div onclick="window.__mapMarkerClick('${item.id}')" style="
             background:${color};color:#fff;
             padding:5px 10px;border-radius:20px;
-            font-size:12px;font-weight:700;
+            font-size:11px;font-weight:700;
             box-shadow:0 2px 6px rgba(0,0,0,0.25);
-            white-space:nowrap;position:relative;
+            white-space:nowrap;position:relative;cursor:pointer;
           ">
-            ${item.category}
+            ${item.category.split(',')[0].trim()}
             <div style="
               position:absolute;bottom:-5px;left:50%;
               transform:translateX(-50%);width:0;height:0;
@@ -83,47 +77,70 @@ export default function Map({ location }: Props) {
           </div>`,
       });
 
-      const marker = new window.kakao.maps.Marker({ position, map });
-      window.kakao.maps.event.addListener(marker, 'click', () => {
-        setSelectedMarker(item);
-        map.panTo(position);
-      });
+      overlaysRef.current.push(overlay);
     });
-
-    setIsLoaded(true);
   }, []);
 
-  // ── 스크립트 로드 ──────────────────────────────────────
+  // ── 지도 초기화 ───────────────────────────────────────
+  const buildMap = useCallback(() => {
+    if (!mapContainerRef.current || mapRef.current) return;
+
+    const lat = location?.lat ?? 37.4563;
+    const lng = location?.lng ?? 126.7052;
+
+    const map = new window.kakao.maps.Map(mapContainerRef.current, {
+      center: new window.kakao.maps.LatLng(lat, lng),
+      level: 5,
+    });
+    mapRef.current = map;
+
+    // 마커 클릭 이벤트 전역 등록
+    (window as any).__mapMarkerClick = (id: string) => {
+      const found = items.find((i) => i.id === id);
+      if (found) setSelectedItem(found);
+    };
+
+    setIsLoaded(true);
+  }, [location?.lat, location?.lng, items]);
+
+  // ── items 변경 시 마커 재드로우 ───────────────────────
+  useEffect(() => {
+    if (!mapRef.current || !isLoaded) return;
+    // 전역 클릭 핸들러도 최신 items로 갱신
+    (window as any).__mapMarkerClick = (id: string) => {
+      const found = items.find((i) => i.id === id);
+      if (found) setSelectedItem(found);
+    };
+    drawMarkers(mapRef.current, items);
+  }, [items, isLoaded, drawMarkers]);
+
+  // ── 위치 변경 시 지도 중심 이동 ──────────────────────
+  useEffect(() => {
+    if (!mapRef.current || !location?.lat || !location?.lng) return;
+    const pos = new window.kakao.maps.LatLng(location.lat, location.lng);
+    mapRef.current.setCenter(pos);
+    mapRef.current.setLevel(6);
+  }, [location?.lat, location?.lng]);
+
+  // ── 스크립트 로드 ─────────────────────────────────────
   useEffect(() => {
     const key = process.env.NEXT_PUBLIC_KAKAO_MAP_KEY;
-    if (!key) { console.error('[KakaoMap] API 키 없음'); return; }
+    if (!key) return;
 
-    // 이미 초기화 완료된 경우
-    if (window.kakao?.maps?.Map) {
-      buildMap();
-      return;
-    }
-
-    // kakao 객체는 있지만 maps.load 대기 중인 경우
-    if (window.kakao?.maps) {
-      window.kakao.maps.load(buildMap);
-      return;
-    }
-
-    // 스크립트 중복 삽입 방지
+    if (window.kakao?.maps?.Map) { buildMap(); return; }
+    if (window.kakao?.maps)      { window.kakao.maps.load(buildMap); return; }
     if (document.getElementById('kakao-map-sdk')) return;
 
-    const script    = document.createElement('script');
-    script.id       = 'kakao-map-sdk';
-    script.type     = 'text/javascript';
-    // autoload=false → maps.load() 콜백 안에서 안전하게 초기화
-    script.src      = `https://dapi.kakao.com/v2/maps/sdk.js?appkey=${key}&autoload=false`;
-    script.onload   = () => { window.kakao.maps.load(buildMap); };
-    script.onerror  = () => { console.error('[KakaoMap] 스크립트 로드 실패 — 카카오 콘솔 도메인 확인 필요'); };
+    const script   = document.createElement('script');
+    script.id      = 'kakao-map-sdk';
+    script.type    = 'text/javascript';
+    script.src     = `https://dapi.kakao.com/v2/maps/sdk.js?appkey=${key}&autoload=false`;
+    script.onload  = () => { window.kakao.maps.load(buildMap); };
+    script.onerror = () => { console.error('[KakaoMap] 스크립트 로드 실패'); };
     document.head.appendChild(script);
   }, [buildMap]);
 
-  // ── 내 위치 ────────────────────────────────────────────
+  // ── 내 위치 이동 ──────────────────────────────────────
   const moveToMyLocation = useCallback(() => {
     if (!mapRef.current || !navigator.geolocation) return;
     setIsLocating(true);
@@ -142,10 +159,7 @@ export default function Map({ location }: Props) {
         mapRef.current.setLevel(4);
         setIsLocating(false);
       },
-      () => {
-        alert('위치 권한을 허용해주세요.');
-        setIsLocating(false);
-      }
+      () => { alert('위치 권한을 허용해주세요.'); setIsLocating(false); }
     );
   }, []);
 
@@ -176,12 +190,28 @@ export default function Map({ location }: Props) {
         </MyLocationBtn>
       )}
 
-      {selectedMarker && (
+      {selectedItem && (
         <MarkerInfoBox>
-          <button className="info_close" onClick={() => setSelectedMarker(null)}>✕</button>
-          <p className="info_category">{selectedMarker.category}</p>
-          <p className="info_name">{selectedMarker.name}</p>
-          <p className="info_address">{selectedMarker.address}</p>
+          <button className="info_close" onClick={() => setSelectedItem(null)}>✕</button>
+          <p className="info_category">{selectedItem.category}</p>
+          <p className="info_name">{selectedItem.title}</p>
+          <p className="info_address">{selectedItem.region}</p>
+          {selectedItem.link && (
+            
+              <a href={selectedItem.link}
+              target="_blank"
+              rel="noopener noreferrer"
+              style={{
+                display: 'inline-block',
+                marginTop: '0.8rem',
+                fontSize: '1.2rem',
+                color: '#2E9E7A',
+                textDecoration: 'underline',
+              }}
+            >
+              자세히 보기 →
+            </a>
+          )}
         </MarkerInfoBox>
       )}
     </MapWrapper>

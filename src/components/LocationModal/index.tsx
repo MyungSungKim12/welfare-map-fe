@@ -149,31 +149,30 @@ export default function LocationModal({ current, isLocating, onDetect, onSelect,
     let lng: number | undefined;
 
     try {
-        const keyword = `${selectedSido.name} ${sigungu.name}`;
-        const key = process.env.NEXT_PUBLIC_KAKAO_MAP_KEY;
-        const res = await fetch(
-        `https://dapi.kakao.com/v2/local/search/keyword.json?query=${encodeURIComponent(keyword)}&size=1`,
-        { headers: { Authorization: `KakaoAK ${key}` } }
-        );
-        const data = await res.json();
-        if (data.documents?.[0]) {
-        lng = parseFloat(data.documents[0].x);
-        lat = parseFloat(data.documents[0].y);
-        }
+      // 클라이언트 직접 호출 → 서버 API 프록시로 변경
+      const keyword = `${selectedSido.name} ${sigungu.name}`;
+      const res = await fetch(
+        `/api/kakao/keyword?query=${encodeURIComponent(keyword)}`
+      );
+      const data = await res.json();
+      if (data.lat && data.lng) {
+        lat = data.lat;
+        lng = data.lng;
+      }
     } catch {
-        // 좌표 없어도 지역 선택은 정상 동작
+      // 좌표 없어도 지역 선택은 정상 동작
     }
 
     onSelect({
-        sidoCd:      selectedSido.code,
-        sigunguCd:   sigungu.code,
-        sidoName:    selectedSido.name,
-        sigunguName: sigungu.name,
-        lat,
-        lng,
+      sidoCd:      selectedSido.code,
+      sigunguCd:   sigungu.code,
+      sidoName:    selectedSido.name,
+      sigunguName: sigungu.name,
+      lat,
+      lng,
     });
     onClose();
-    };
+  };
 
   return (
     <Overlay onClick={handleOverlayClick}>

@@ -5,13 +5,16 @@ const BASE_URL = 'http://apis.data.go.kr/B554287/LocalGovernmentWelfareInformati
 export async function GET(req: NextRequest) {
   const { searchParams } = req.nextUrl;
 
+  const sidoCd    = searchParams.get('sidoCd')    ?? '28';
+  const sigunguCd = searchParams.get('sigunguCd') ?? '28177';
+
   const params = new URLSearchParams({
     serviceKey: process.env.WELFARE_API_KEY!,
     callTp:     'L',
     pageNo:     searchParams.get('pageNo')    ?? '1',
     numOfRows:  searchParams.get('numOfRows') ?? '10',
-    sidoCd:     searchParams.get('sidoCd')    ?? '28',
-    sigunguCd:  searchParams.get('sigunguCd') ?? '28177',
+    sidoCd,
+    sigunguCd,
   });
 
   try {
@@ -27,7 +30,6 @@ export async function GET(req: NextRequest) {
 
 function parseLocalXml(xml: string) {
   const items: any[] = [];
-  // <servList> 태그 기준으로 파싱
   const matches = xml.match(/<servList>([\s\S]*?)<\/servList>/g) ?? [];
 
   matches.forEach((block) => {

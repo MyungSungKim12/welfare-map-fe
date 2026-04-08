@@ -1,24 +1,28 @@
+'use client';
+
+import { useState } from 'react';
 import Navbar from '@/components/Navbar';
 import Hero from '@/components/Hero';
 import LifeStage from '@/components/LifeStage';
 import NoticeBanner from '@/components/NoticeBanner';
 import PopularList from '@/components/PopularList';
-import Map from '@/components/Map';
-import Filter from '@/components/Filter';
-import WelfareList from '@/components/WelfareList';
+import WelfareSection from '@/components/WelfareSection';
 import Statistics from '@/components/Statistics';
 import Footer from '@/components/Footer';
-import WelfareSection from '@/components/WelfareSection';
+import { useLocation } from '@/hooks/useLocation';
+import { LocationInfo } from '@/hooks/useLocation';
 
 export default function Home() {
+  const { location, isLocating, detectLocation, setLocation } = useLocation();
+
   return (
     <main>
-      <Navbar />
+      <Navbar location={location} isLocating={isLocating} detectLocation={detectLocation} />
       <Hero />
       <LifeStage />
       <NoticeBanner />
       <PopularList />
-      <WelfareSection />
+      <WelfareSection location={location} isLocating={isLocating} detectLocation={detectLocation} setLocation={setLocation} />
       <Statistics />
       <Footer />
     </main>

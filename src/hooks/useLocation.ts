@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 import { SIDO_LIST, SIGUNGU_MAP } from '@/constants/region';
 
 export interface LocationInfo {
@@ -8,8 +8,8 @@ export interface LocationInfo {
   sigunguCd:   string;
   sidoName:    string;
   sigunguName: string;
-  lat?:        number;  // 추가
-  lng?:        number;  // 추가
+  lat?:        number;
+  lng?:        number;
 }
 
 const DEFAULT_LOCATION: LocationInfo = {
@@ -17,9 +17,11 @@ const DEFAULT_LOCATION: LocationInfo = {
   sigunguCd:   '28177',
   sidoName:    '인천광역시',
   sigunguName: '미추홀구',
-  lat:         37.4563,  // 추가
-  lng:         126.7052, // 추가
+  lat:         37.4563,
+  lng:         126.7052,
 };
+
+const STORAGE_KEY = 'welfare_location';
 
 async function coordsToRegionCode(lat: number, lng: number): Promise<LocationInfo | null> {
   const key = process.env.NEXT_PUBLIC_KAKAO_MAP_KEY;
@@ -27,39 +29,36 @@ async function coordsToRegionCode(lat: number, lng: number): Promise<LocationInf
 
   try {
     const res = await fetch(
-      `https://dapi.kakao.com/v2/local/geo/coord2regioncode.json?x=${lng}&y=${lat}`,
-      { headers: { Authorization: `KakaoAK ${key}` } }
+      `/api/kakao/coord2region?lat=${lat}&lng=${lng}`
     );
     const data = await res.json();
-
-    const region = data.documents?.find((d: any) => d.region_type === 'B');
-    if (!region) return null;
-
-    const sidoName    = region.region_1depth_name;
-    const sigunguName = region.region_2depth_name;
-
-    const sido = SIDO_LIST.find((s) => sidoName.includes(s.name.slice(0, 2)));
-    if (!sido) return null;
-
-    const sigunguList = SIGUNGU_MAP[sido.code] ?? [];
-    const sigungu = sigunguList.find((s) => sigunguName.includes(s.name.split(' ')[0]));
-
-    return {
-      sidoCd:      sido.code,
-      sigunguCd:   sigungu?.code ?? sido.code,
-      sidoName:    sido.name,
-      sigunguName: sigungu?.name ?? sigunguName,
-      lat,   // 추가
-      lng,   // 추가
-    };
+    return data.location ?? null;
   } catch {
     return null;
   }
 }
 
 export function useLocation() {
-  const [location,   setLocation]   = useState<LocationInfo>(DEFAULT_LOCATION);
-  const [isLocating, setIsLocating] = useState(false);
+  const [location,   setLocationState] = useState<LocationInfo>(DEFAULT_LOCATION);
+  const [isLocating, setIsLocating]    = useState(false);
+
+  // localStorage 복원
+  useEffect(() => {
+    try {
+      const saved = localStorage.getItem(STORAGE_KEY);
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        if (parsed.sidoCd) setLocationState(parsed);
+      }
+    } catch {}
+  }, []);
+
+  const setLocation = useCallback((info: LocationInfo) => {
+    setLocationState(info);
+    try {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(info));
+    } catch {}
+  }, []);
 
   const detectLocation = useCallback(async () => {
     if (!navigator.geolocation) {
@@ -88,7 +87,7 @@ export function useLocation() {
     } finally {
       setIsLocating(false);
     }
-  }, []);
+  }, [setLocation]);
 
   return { location, isLocating, detectLocation, setLocation };
 }
