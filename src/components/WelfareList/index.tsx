@@ -7,8 +7,9 @@ import { FilterType } from '@/types/welfare';
 import { LocationInfo } from '@/hooks/useLocation';
 
 interface Props {
-  filter?: FilterType;
+  filter?:   FilterType;
   location?: LocationInfo;
+  keyword?:  string;
 }
 
 function SkeletonCard() {
@@ -30,8 +31,58 @@ function SkeletonCard() {
   );
 }
 
-export default function WelfareList({ filter, location }: Props) {
-  const { items, isLoading, error, page, totalPages, setPage, refetch } = useWelfareData(filter, location);
+function Pagination({ page, totalPages, setPage }: {
+  page: number; totalPages: number; setPage: (p: number) => void;
+}) {
+  if (totalPages <= 1) return null;
+
+  // 최대 5개 페이지 버튼 표시
+  const start = Math.max(1, Math.min(page - 2, totalPages - 4));
+  const end   = Math.min(totalPages, start + 4);
+  const pages = Array.from({ length: end - start + 1 }, (_, i) => start + i);
+
+  const btnStyle = (active: boolean, disabled = false) => ({
+    padding: '0.7rem 1.2rem',
+    border: `1.5px solid ${active ? '#1B3A4B' : '#D5CEC4'}`,
+    borderRadius: '8px',
+    background: active ? '#1B3A4B' : '#fff',
+    color: active ? '#fff' : disabled ? '#C0B8B0' : '#6B6058',
+    cursor: disabled ? 'not-allowed' : 'pointer',
+    fontSize: '1.4rem',
+    fontWeight: active ? 700 : 400,
+    opacity: disabled ? 0.5 : 1,
+    minWidth: '36px',
+  } as React.CSSProperties);
+
+  return (
+    <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '0.6rem', marginTop: '2.4rem' }}>
+      <button style={btnStyle(false, page === 1)} onClick={() => setPage(Math.max(1, page - 1))} disabled={page === 1}>
+        ‹
+      </button>
+      {start > 1 && (
+        <>
+          <button style={btnStyle(false)} onClick={() => setPage(1)}>1</button>
+          {start > 2 && <span style={{ color: '#8A7F72', fontSize: '1.4rem' }}>···</span>}
+        </>
+      )}
+      {pages.map((p) => (
+        <button key={p} style={btnStyle(p === page)} onClick={() => setPage(p)}>{p}</button>
+      ))}
+      {end < totalPages && (
+        <>
+          {end < totalPages - 1 && <span style={{ color: '#8A7F72', fontSize: '1.4rem' }}>···</span>}
+          <button style={btnStyle(false)} onClick={() => setPage(totalPages)}>{totalPages}</button>
+        </>
+      )}
+      <button style={btnStyle(false, page === totalPages)} onClick={() => setPage(Math.min(totalPages, page + 1))} disabled={page === totalPages}>
+        ›
+      </button>
+    </div>
+  );
+}
+
+export default function WelfareList({ filter, location, keyword }: Props) {
+  const { items, allItems, isLoading, error, page, totalPages, setPage, refetch } = useWelfareData(filter, location, keyword);
 
   return (
     <>
@@ -47,19 +98,19 @@ export default function WelfareList({ filter, location }: Props) {
           <p className="result_count">
             {isLoading
               ? '복지 서비스를 불러오는 중...'
-              : <>총 <span>{items.length > 0 ? `${(page - 1) * 5 + 1}~${Math.min(page * 5, items.length + (page-1)*5)}` : '0'}건</span> 표시 중</>
+              : allItems.length > 0
+                ? <>총 <span>{allItems.length}건</span> 중 {(page - 1) * 5 + 1}~{Math.min(page * 5, allItems.length)}번째</>
+                : '검색 결과가 없습니다'
             }
           </p>
         </ListHeader>
 
-        {/* 로딩 */}
         {isLoading && (
           <div style={{ display: 'flex', flexDirection: 'column', gap: '1.4rem' }}>
             {[1, 2, 3].map((n) => <SkeletonCard key={n} />)}
           </div>
         )}
 
-        {/* 에러 */}
         {!isLoading && error && (
           <EmptyState>
             <span className="empty_icon">⚠️</span>
@@ -76,69 +127,21 @@ export default function WelfareList({ filter, location }: Props) {
           </EmptyState>
         )}
 
-        {/* 빈 결과 */}
         {!isLoading && !error && items.length === 0 && (
           <EmptyState>
             <span className="empty_icon">🔍</span>
-            <p className="empty_text">해당하는 복지 서비스가 없습니다.<br />필터를 변경해보세요.</p>
+            <p className="empty_text">
+              해당하는 복지 서비스가 없습니다.<br />
+              필터나 위치를 변경해보세요.
+            </p>
           </EmptyState>
         )}
 
-        {/* 카드 목록 */}
         {!isLoading && !error && items.map((item) => (
           <WelfareCard key={item.id} welfare={item} isSaved={false} onSave={() => {}} />
         ))}
 
-        {/* 페이징 */}
-        {!isLoading && !error && totalPages > 1 && (
-          <div style={{
-            display: 'flex', justifyContent: 'center',
-            alignItems: 'center', gap: '0.8rem', marginTop: '2rem',
-          }}>
-            <button
-              onClick={() => setPage(Math.max(1, page - 1))}
-              disabled={page === 1}
-              style={{
-                padding: '0.7rem 1.4rem', border: '1.5px solid #D5CEC4',
-                borderRadius: '8px', background: '#fff', cursor: 'pointer',
-                fontSize: '1.4rem', color: '#6B6058',
-                opacity: page === 1 ? 0.4 : 1,
-              }}
-            >
-              ← 이전
-            </button>
-
-            {Array.from({ length: totalPages }, (_, i) => i + 1).map((p) => (
-              <button
-                key={p}
-                onClick={() => setPage(p)}
-                style={{
-                  width: '36px', height: '36px',
-                  border: `1.5px solid ${p === page ? '#1B3A4B' : '#D5CEC4'}`,
-                  borderRadius: '8px',
-                  background: p === page ? '#1B3A4B' : '#fff',
-                  color: p === page ? '#fff' : '#6B6058',
-                  cursor: 'pointer', fontSize: '1.4rem', fontWeight: p === page ? 700 : 400,
-                }}
-              >
-                {p}
-              </button>
-            ))}
-
-            <button
-              onClick={() => setPage(Math.min(totalPages, page + 1))}
-              disabled={page === totalPages}
-              style={{
-                padding: '0.7rem 1.4rem', border: '1.5px solid #D5CEC4',
-                borderRadius: '8px', background: '#fff', cursor: 'pointer',
-                fontSize: '1.4rem', color: '#6B6058',
-                opacity: page === totalPages ? 0.4 : 1,
-              }}
-            >
-              다음 →
-            </button>
-          </div>
-        )}
+        <Pagination page={page} totalPages={totalPages} setPage={setPage} />
       </ListWrapper>
     </>
   );

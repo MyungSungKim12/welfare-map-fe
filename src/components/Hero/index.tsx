@@ -6,8 +6,21 @@ import {
   HeroSearchBar, HeroCTA, HeroStats,
 } from './Hero.style';
 
-export default function Hero() {
+interface Props {
+  onSearch:       (keyword: string) => void;
+  onDetectLocation: () => void;
+}
+
+export default function Hero({ onSearch, onDetectLocation }: Props) {
   const [query, setQuery] = useState('');
+
+  const handleSearch = () => {
+    onSearch(query.trim());
+  };
+
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === 'Enter') handleSearch();
+  };
 
   return (
     <HeroWrapper>
@@ -24,14 +37,15 @@ export default function Hero() {
         <HeroSearchBar>
           <input
             type="text"
-            placeholder="복지 서비스명을 검색하세요"
+            placeholder="복지 서비스명을 검색하세요 (예: 청년, 노인 건강검진)"
             value={query}
             onChange={(e) => setQuery(e.target.value)}
+            onKeyDown={handleKeyDown}
           />
-          <button>검색</button>
+          <button onClick={handleSearch}>검색</button>
         </HeroSearchBar>
 
-        <HeroCTA>
+        <HeroCTA onClick={onDetectLocation}>
           📍 지금 내 위치로 복지 찾기
         </HeroCTA>
 

@@ -25,6 +25,7 @@ const SITUATION_TO_KEY_CODE: Record<string, string> = {
 
 interface UseWelfareDataReturn {
   items:      WelfareItem[];
+  allItems:   WelfareItem[];
   isLoading:  boolean;
   error:      string | null;
   page:       number;
@@ -35,7 +36,8 @@ interface UseWelfareDataReturn {
 
 export function useWelfareData(
   filter?:   FilterType,
-  location?: LocationInfo
+  location?: LocationInfo,
+  keyword?:  string,
 ): UseWelfareDataReturn {
   const [allItems,  setAllItems]  = useState<WelfareItem[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -59,18 +61,20 @@ export function useWelfareData(
         sigunguCd,
         ...(lifeArray   && { lifeArray }),
         ...(srchKeyCode && { srchKeyCode }),
+        ...(keyword     && { keyword }),
       });
 
       const requests: Promise<Response>[] = [
         fetch(`/api/welfare/local?${localParams}`),
       ];
 
-      // 필터 있을 때 중앙부처도 조회
-      if (lifeArray || srchKeyCode) {
+      // 필터 또는 검색어 있을 때 중앙부처도 조회
+      if (lifeArray || srchKeyCode || keyword) {
         const nationalParams = new URLSearchParams({
           numOfRows: '30',
           ...(lifeArray   && { lifeArray }),
           ...(srchKeyCode && { srchKeyCode }),
+          ...(keyword     && { keyword }),
         });
         requests.push(fetch(`/api/welfare/national?${nationalParams}`));
       }
@@ -87,22 +91,33 @@ export function useWelfareData(
           ? (await (results[1] as PromiseFulfilledResult<Response>).value.json()).items ?? []
           : [];
 
-      const allData = [...localItems, ...nationalItems].filter(
+      let merged = [...localItems, ...nationalItems].filter(
         (item, idx, arr) => arr.findIndex((i) => i.id === item.id) === idx && item.id
       );
 
-      setAllItems(allData);
+      // 검색어 클라이언트 사이드 필터링 (API가 지원 안 하는 경우 대비)
+      if (keyword?.trim()) {
+        const kw = keyword.trim().toLowerCase();
+        merged = merged.filter(
+          (item) =>
+            item.title.toLowerCase().includes(kw) ||
+            item.summary.toLowerCase().includes(kw) ||
+            item.category.toLowerCase().includes(kw)
+        );
+      }
+
+      setAllItems(merged);
     } catch {
       setError('복지 데이터를 불러오지 못했습니다.');
     } finally {
       setIsLoading(false);
     }
-  }, [filter?.ageGroup, filter?.situation, location?.sidoCd, location?.sigunguCd]);
+  }, [filter?.ageGroup, filter?.situation, location?.sidoCd, location?.sigunguCd, keyword]);
 
   useEffect(() => { fetchData(); }, [fetchData]);
 
   const totalPages = Math.max(1, Math.ceil(allItems.length / PAGE_SIZE));
   const items      = allItems.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
 
-  return { items, isLoading, error, page, totalPages, setPage, refetch: fetchData };
+  return { items, allItems, isLoading, error, page, totalPages, setPage, refetch: fetchData };
 }

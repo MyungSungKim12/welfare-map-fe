@@ -6,20 +6,23 @@ export async function GET(req: NextRequest) {
   const { searchParams } = req.nextUrl;
 
   const sidoCd    = searchParams.get('sidoCd')    ?? '28';
-  const sigunguCd = searchParams.get('sigunguCd') ?? '28177';
+  const sigunguCd = searchParams.get('sigunguCd') ?? '';
 
   const params = new URLSearchParams({
     serviceKey: process.env.WELFARE_API_KEY!,
     callTp:     'L',
-    pageNo:     searchParams.get('pageNo')    ?? '1',
-    numOfRows:  searchParams.get('numOfRows') ?? '10',
+    pageNo:     searchParams.get('pageNo')      ?? '1',
+    numOfRows:  searchParams.get('numOfRows')   ?? '50',
     sidoCd,
-    sigunguCd,
+    // sigunguCd가 sidoCd와 같으면 시도 전체 조회 (군/구 없음)
+    ...(sigunguCd && sigunguCd !== sidoCd && { sigunguCd }),
+    ...(searchParams.get('lifeArray')   && { lifeArray:   searchParams.get('lifeArray')! }),
+    ...(searchParams.get('srchKeyCode') && { srchKeyCode: searchParams.get('srchKeyCode')! }),
   });
 
   try {
-    const res   = await fetch(`${BASE_URL}?${params}`, { cache: 'no-store' });
-    const text  = await res.text();
+    const res  = await fetch(`${BASE_URL}?${params}`, { cache: 'no-store' });
+    const text = await res.text();
     const items = parseLocalXml(text);
     return NextResponse.json({ success: true, items });
   } catch (e) {

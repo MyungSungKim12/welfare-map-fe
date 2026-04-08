@@ -10,15 +10,16 @@ import { DEFAULT_FILTER } from '@/constants/data';
 import { LocationInfo } from '@/hooks/useLocation';
 
 interface Props {
-  location: LocationInfo;
-  isLocating: boolean;
-  detectLocation: () => void;
-  setLocation: (info: LocationInfo) => void;
+  location:        LocationInfo;
+  isLocating:      boolean;
+  detectLocation:  () => void;
+  setLocation:     (info: LocationInfo) => void;
+  keyword?:        string;
 }
 
-export default function WelfareSection({ location, isLocating, detectLocation, setLocation }: Props) {
-  const [filter,     setFilter]     = useState<FilterType>(DEFAULT_FILTER);
-  const [showModal,  setShowModal]  = useState(false);
+export default function WelfareSection({ location, isLocating, detectLocation, setLocation, keyword }: Props) {
+  const [filter,    setFilter]    = useState<FilterType>(DEFAULT_FILTER);
+  const [showModal, setShowModal] = useState(false);
 
   const handleDetect = async () => {
     await detectLocation();
@@ -27,18 +28,13 @@ export default function WelfareSection({ location, isLocating, detectLocation, s
 
   return (
     <>
-      {/* 지도 — 위치 + items 전달 */}
       <section style={{ maxWidth: '1280px', margin: '0 auto', padding: '4rem 2rem 0' }}>
         <Map location={location} />
       </section>
 
-      {/* 필터 + 리스트 */}
       <section style={{
-        display: 'flex',
-        maxWidth: '1280px',
-        margin: '0 auto',
-        padding: '2rem 2rem 4rem',
-        gap: '2.8rem',
+        display: 'flex', maxWidth: '1280px',
+        margin: '0 auto', padding: '2rem 2rem 4rem', gap: '2.8rem',
       }}>
         <aside style={{ width: '280px', flexShrink: 0 }}>
           <Filter
@@ -49,11 +45,10 @@ export default function WelfareSection({ location, isLocating, detectLocation, s
           />
         </aside>
         <div style={{ flex: 1, minWidth: 0 }}>
-          <WelfareList filter={filter} location={location} />
+          <WelfareList filter={filter} location={location} keyword={keyword} />
         </div>
       </section>
 
-      {/* 위치 선택 모달 */}
       {showModal && (
         <LocationModal
           current={location}
