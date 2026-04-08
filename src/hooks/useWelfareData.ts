@@ -91,7 +91,7 @@ export function useWelfareData(
         return true;
       });
 
-      let merged = [...localItems, ...nationalItems].filter(
+      let merged = [...filteredLocal, ...nationalItems].filter(
         (item, idx, arr) => arr.findIndex((i) => i.id === item.id) === idx && item.id
       );
 
