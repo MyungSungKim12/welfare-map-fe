@@ -48,15 +48,16 @@ export function useWelfareData(
       const srchKeyCode = filter ? SITUATION_TO_KEY_CODE[filter.situation] ?? '' : '';
       const sidoCd      = location?.sidoCd    ?? '28';
       const sigunguCd   = location?.sigunguCd ?? '28177';
+      const sidoShort   = location?.sidoName?.slice(0, 2) ?? '인천';
+      const sigunguName = location?.sigunguName ?? '';
 
       const localParams = new URLSearchParams({
         numOfRows: '100',
         sidoCd,
-        sigunguCd,
         ...(lifeArray   && { lifeArray }),
         ...(srchKeyCode && { srchKeyCode }),
       });
-
+      
       const requests: Promise<Response>[] = [
         fetch(`/api/welfare/local?${localParams}`),
       ];
@@ -79,6 +80,16 @@ export function useWelfareData(
       const nationalItems: WelfareItem[] =
         results[1]?.status === 'fulfilled'
           ? (await (results[1] as PromiseFulfilledResult<Response>).value.json()).items ?? [] : [];
+      const filteredLocal = localItems.filter((item: any) => {
+        const itemSido    = item.ctpvNm ?? '';
+        const itemSigungu = item.sggNm  ?? '';
+        if (!itemSido.includes(sidoShort)) return false;
+        if (sigunguName && itemSigungu) {
+          const sg = sigunguName.replace(/시$|구$|군$/, '');
+          if (!itemSigungu.includes(sg)) return false;
+        }
+        return true;
+      });
 
       let merged = [...localItems, ...nationalItems].filter(
         (item, idx, arr) => arr.findIndex((i) => i.id === item.id) === idx && item.id
@@ -101,7 +112,7 @@ export function useWelfareData(
     } finally {
       setIsLoading(false);
     }
-  }, [filter?.ageGroup, filter?.situation, location?.sidoCd, location?.sigunguCd, keyword]);
+  }, [filter?.ageGroup, filter?.situation, location?.sidoCd, location?.sigunguCd, location?.sigunguName, keyword]);
 
   useEffect(() => { fetchData(); }, [fetchData]);
 

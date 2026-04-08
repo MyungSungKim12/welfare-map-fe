@@ -31,6 +31,13 @@ export async function GET(req: NextRequest) {
   }
 }
 
+function decodeHtml(str: string): string {
+  return str
+    .replace(/&amp;/g, '&').replace(/&lt;/g, '<')
+    .replace(/&gt;/g, '>').replace(/&quot;/g, '"')
+    .replace(/&#39;/g, "'").replace(/&nbsp;/g, ' ');
+}
+
 function parseLocalXml(xml: string) {
   const items: any[] = [];
   const matches = xml.match(/<servList>([\s\S]*?)<\/servList>/g) ?? [];
@@ -38,7 +45,7 @@ function parseLocalXml(xml: string) {
   matches.forEach((block) => {
     const get = (tag: string) => {
       const m = block.match(new RegExp(`<${tag}>([\\s\\S]*?)<\\/${tag}>`));
-      return m ? m[1].trim() : '';
+      return m ? decodeHtml(m[1].trim()) : '';
     };
 
     const id = get('servId');
@@ -50,6 +57,8 @@ function parseLocalXml(xml: string) {
       category: get('intrsThemaNmArray') || get('srvPvsnNm') || '기타',
       target:   get('trgterIndvdlNmArray') || '전체',
       period:   get('sprtCycNm') || '확인 필요',
+      ctpvNm:   get('ctpvNm'),   // ← 클라이언트 필터링용
+      sggNm:    get('sggNm'),    // ← 클라이언트 필터링용
       region:   [get('ctpvNm'), get('sggNm')].filter(Boolean).join(' ') || '지자체',
       summary:  get('servDgst'),
       link:     get('servDtlLink'),

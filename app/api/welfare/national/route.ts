@@ -25,6 +25,13 @@ export async function GET(req: NextRequest) {
   }
 }
 
+function decodeHtml(str: string): string {
+  return str
+    .replace(/&amp;/g, '&').replace(/&lt;/g, '<')
+    .replace(/&gt;/g, '>').replace(/&quot;/g, '"')
+    .replace(/&#39;/g, "'").replace(/&nbsp;/g, ' ');
+}
+
 function parseNationalXml(xml: string) {
   const items: any[] = [];
   // 지자체와 동일하게 <servList> 기준으로 파싱
@@ -33,7 +40,7 @@ function parseNationalXml(xml: string) {
   matches.forEach((block) => {
     const get = (tag: string) => {
       const m = block.match(new RegExp(`<${tag}>([\\s\\S]*?)<\\/${tag}>`));
-      return m ? m[1].trim() : '';
+      return m ? decodeHtml(m[1].trim()) : '';
     };
 
     const id = get('servId');
