@@ -13,7 +13,7 @@ interface Props {
 }
 
 const DUMMY_MARKERS: WelfareMarker[] = [
-  { id: '1', name: '미추홀구 노인복지관',           lat: 37.4563, lng: 126.7052, category: '노인',   address: '인천 미추홀구 매소홀로 388' },
+  { id: '1', name: '미추홀구 노인복지관2',           lat: 37.4563, lng: 126.7052, category: '노인',   address: '인천 미추홀구 매소홀로 388' },
   { id: '2', name: '인천 장애인 종합복지관',         lat: 37.4601, lng: 126.7120, category: '장애인', address: '인천 미추홀구 소성로163번길 33' },
   { id: '3', name: '미추홀구 건강가정지원센터',       lat: 37.4520, lng: 126.7080, category: '가족',   address: '인천 미추홀구 학익소로 50' },
   { id: '4', name: '인천남부 고용복지플러스센터',     lat: 37.4490, lng: 126.7010, category: '취업',   address: '인천 미추홀구 인주대로 321' },
