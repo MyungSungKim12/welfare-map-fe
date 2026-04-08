@@ -17,16 +17,18 @@ const DEFAULT_LOCATION: LocationInfo = {
   lat: 37.4563, lng: 126.7052,
 };
 
-const STORAGE_KEY = 'welfare_location';
+// 수동 설정만 저장 (GPS 성공 시 저장 안 함)
+const MANUAL_KEY = 'welfare_location_manual';
 
 export function useLocation() {
   const [location,    setLocationState] = useState<LocationInfo>(DEFAULT_LOCATION);
   const [isLocating,  setIsLocating]    = useState(false);
   const [initialized, setInitialized]   = useState(false);
 
+  // 수동 위치 설정 → localStorage 저장
   const setLocation = useCallback((info: LocationInfo) => {
     setLocationState(info);
-    try { localStorage.setItem(STORAGE_KEY, JSON.stringify(info)); } catch {}
+    try { localStorage.setItem(MANUAL_KEY, JSON.stringify(info)); } catch {}
   }, []);
 
   const coordsToRegion = useCallback(async (lat: number, lng: number) => {
@@ -37,6 +39,7 @@ export function useLocation() {
     } catch { return null; }
   }, []);
 
+  // Navbar 클릭 → GPS 재감지 (수동 설정 기록 삭제)
   const detectLocation = useCallback(async () => {
     if (!navigator.geolocation) {
       alert('이 브라우저는 위치 서비스를 지원하지 않습니다.');
@@ -52,26 +55,32 @@ export function useLocation() {
         );
       });
       const info = await coordsToRegion(coords.latitude, coords.longitude);
-      if (info) setLocation(info);
-      else alert('행정구역을 찾을 수 없습니다. 위치 모달에서 직접 선택해주세요.');
+      if (info) {
+        setLocationState(info);
+        try { localStorage.removeItem(MANUAL_KEY); } catch {} // 수동 기록 삭제
+      } else {
+        alert('행정구역을 찾을 수 없습니다. 위치 모달에서 직접 선택해주세요.');
+      }
     } catch {
       alert('위치 권한을 허용해주세요.');
     } finally {
       setIsLocating(false);
     }
-  }, [coordsToRegion, setLocation]);
+  }, [coordsToRegion]);
 
-  // 초기화: 항상 GPS 우선 → 실패 시 localStorage 복원
+  // 초기화:
+  // GPS 성공 → GPS 위치 (localStorage 무시)
+  // GPS 실패 → 수동 설정 localStorage 복원
+  // 둘 다 없으면 → 기본값
   useEffect(() => {
     if (initialized) return;
     setInitialized(true);
 
     const init = async () => {
       if (!navigator.geolocation) {
-        // GPS 없으면 localStorage
         try {
-          const saved = localStorage.getItem(STORAGE_KEY);
-          if (saved) { const p = JSON.parse(saved); if (p?.sidoCd) setLocationState(p); }
+          const s = localStorage.getItem(MANUAL_KEY);
+          if (s) { const p = JSON.parse(s); if (p?.sidoCd) setLocationState(p); }
         } catch {}
         return;
       }
@@ -87,20 +96,17 @@ export function useLocation() {
         });
         const info = await coordsToRegion(coords.latitude, coords.longitude);
         if (info) {
-          setLocationState(info);
-          try { localStorage.setItem(STORAGE_KEY, JSON.stringify(info)); } catch {}
+          setLocationState(info); // GPS 성공 → GPS 위치, localStorage 저장 X
         } else {
-          // 변환 실패 → localStorage 복원
           try {
-            const saved = localStorage.getItem(STORAGE_KEY);
-            if (saved) { const p = JSON.parse(saved); if (p?.sidoCd) setLocationState(p); }
+            const s = localStorage.getItem(MANUAL_KEY);
+            if (s) { const p = JSON.parse(s); if (p?.sidoCd) setLocationState(p); }
           } catch {}
         }
       } catch {
-        // GPS 거부/실패 → localStorage 복원
         try {
-          const saved = localStorage.getItem(STORAGE_KEY);
-          if (saved) { const p = JSON.parse(saved); if (p?.sidoCd) setLocationState(p); }
+          const s = localStorage.getItem(MANUAL_KEY);
+          if (s) { const p = JSON.parse(s); if (p?.sidoCd) setLocationState(p); }
         } catch {}
       } finally {
         setIsLocating(false);
