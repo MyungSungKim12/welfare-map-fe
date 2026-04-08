@@ -7,20 +7,14 @@ import { LocationInfo } from '@/hooks/useLocation';
 const PAGE_SIZE = 5;
 
 const AGE_TO_LIFE_CODE: Record<string, string> = {
-  child:  '001',
-  youth:  '003',
-  middle: '004',
-  senior: '006',
-  all:    '',
+  child:  '001', youth:  '003',
+  middle: '004', senior: '006', all: '',
 };
 
 const SITUATION_TO_KEY_CODE: Record<string, string> = {
-  newlywed:   '010',
-  pregnant:   '002',
-  job:        '004',
-  disability: '003',
-  lowincome:  '001',
-  all:        '',
+  newlywed: '010', pregnant:   '002',
+  job:      '004', disability: '003',
+  lowincome:'001', all:        '',
 };
 
 interface UseWelfareDataReturn {
@@ -56,25 +50,22 @@ export function useWelfareData(
       const sigunguCd   = location?.sigunguCd ?? '28177';
 
       const localParams = new URLSearchParams({
-        numOfRows: '50',
+        numOfRows: '100',
         sidoCd,
         sigunguCd,
         ...(lifeArray   && { lifeArray }),
         ...(srchKeyCode && { srchKeyCode }),
-        ...(keyword     && { keyword }),
       });
 
       const requests: Promise<Response>[] = [
         fetch(`/api/welfare/local?${localParams}`),
       ];
 
-      // 필터 또는 검색어 있을 때 중앙부처도 조회
       if (lifeArray || srchKeyCode || keyword) {
         const nationalParams = new URLSearchParams({
-          numOfRows: '30',
+          numOfRows: '50',
           ...(lifeArray   && { lifeArray }),
           ...(srchKeyCode && { srchKeyCode }),
-          ...(keyword     && { keyword }),
         });
         requests.push(fetch(`/api/welfare/national?${nationalParams}`));
       }
@@ -83,26 +74,24 @@ export function useWelfareData(
 
       const localItems: WelfareItem[] =
         results[0].status === 'fulfilled'
-          ? (await results[0].value.json()).items ?? []
-          : [];
+          ? (await results[0].value.json()).items ?? [] : [];
 
       const nationalItems: WelfareItem[] =
         results[1]?.status === 'fulfilled'
-          ? (await (results[1] as PromiseFulfilledResult<Response>).value.json()).items ?? []
-          : [];
+          ? (await (results[1] as PromiseFulfilledResult<Response>).value.json()).items ?? [] : [];
 
       let merged = [...localItems, ...nationalItems].filter(
         (item, idx, arr) => arr.findIndex((i) => i.id === item.id) === idx && item.id
       );
 
-      // 검색어 클라이언트 사이드 필터링 (API가 지원 안 하는 경우 대비)
+      // 검색어 클라이언트 필터링
       if (keyword?.trim()) {
         const kw = keyword.trim().toLowerCase();
         merged = merged.filter(
           (item) =>
             item.title.toLowerCase().includes(kw) ||
-            item.summary.toLowerCase().includes(kw) ||
-            item.category.toLowerCase().includes(kw)
+            item.summary?.toLowerCase().includes(kw) ||
+            item.category?.toLowerCase().includes(kw)
         );
       }
 
