@@ -15,17 +15,21 @@ export interface FilterType {
 }
 
 export interface WelfareItem {
-  id:       string;
-  title:    string;
-  category: string;
-  target:   string;
-  period:   string;
-  region:   string;
-  summary:  string;
-  link:     string;
-  // 위치 기반 클라이언트 필터링용 (local API 응답)
-  ctpvNm?:  string;   // 시도명 (예: 인천광역시)
-  sggNm?:   string;   // 시군구명 (예: 미추홀구)
+  id:          string;
+  title:       string;
+  category:    string;
+  target:      string;
+  period:      string;
+  region:      string;
+  summary:     string;
+  link:        string;
+  // 위치 기반 클라이언트 필터링용
+  ctpvNm?:     string;  // 시도명
+  sggNm?:      string;  // 시군구명
+  // 마감임박 / 신규 배지용
+  applyEndDd?:  string;  // 신청 마감일 (예: 20260430)
+  lastModYmd?:  string;  // 최종 수정일 (신규 판별용)
+  isAlways?:    boolean; // 연중 상시 여부
 }
 
 export interface WelfareMarker {

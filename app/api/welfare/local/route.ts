@@ -53,15 +53,18 @@ function parseLocalXml(xml: string) {
 
     items.push({
       id,
-      title:    get('servNm'),
-      category: get('intrsThemaNmArray') || get('srvPvsnNm') || '기타',
-      target:   get('trgterIndvdlNmArray') || '전체',
-      period:   get('sprtCycNm') || '확인 필요',
-      ctpvNm:   get('ctpvNm'),   // ← 클라이언트 필터링용
-      sggNm:    get('sggNm'),    // ← 클라이언트 필터링용
-      region:   [get('ctpvNm'), get('sggNm')].filter(Boolean).join(' ') || '지자체',
-      summary:  get('servDgst'),
-      link:     get('servDtlLink'),
+      title:      get('servNm'),
+      category:   get('intrsThemaNmArray') || get('srvPvsnNm') || '기타',
+      target:     get('trgterIndvdlNmArray') || '전체',
+      period:     get('sprtCycNm') || '확인 필요',
+      ctpvNm:     get('ctpvNm'),
+      sggNm:      get('sggNm'),
+      region:     [get('ctpvNm'), get('sggNm')].filter(Boolean).join(' ') || '지자체',
+      summary:    get('servDgst'),
+      link:       get('servDtlLink'),
+      applyEndDd: get('aplyEndDd'),
+      lastModYmd: get('lastModYmd'),
+      isAlways:   get('alwServYn') === 'Y',
     });
   });
 

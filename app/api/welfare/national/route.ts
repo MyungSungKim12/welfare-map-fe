@@ -48,13 +48,16 @@ function parseNationalXml(xml: string) {
 
     items.push({
       id,
-      title:    get('servNm'),
-      category: get('lifeNmArray') || get('intrsThemaNmArray') || get('srvPvsnNm') || '기타',
-      target:   get('trgterIndvdlNmArray') || '전체',
-      period:   get('sprtCycNm') || (get('alwServYn') === 'Y' ? '연중 상시' : '확인 필요'),
-      region:   '전국',
-      summary:  get('servDgst'),
-      link:     get('servDtlLink'),
+      title:      get('servNm'),
+      category:   get('lifeNmArray') || get('intrsThemaNmArray') || get('srvPvsnNm') || '기타',
+      target:     get('trgterIndvdlNmArray') || '전체',
+      period:     get('sprtCycNm') || (get('alwServYn') === 'Y' ? '연중 상시' : '확인 필요'),
+      region:     '전국',
+      summary:    get('servDgst'),
+      link:       get('servDtlLink'),
+      applyEndDd: get('aplyEndDd'),
+      lastModYmd: get('lastModYmd'),
+      isAlways:   get('alwServYn') === 'Y',
     });
   });
 
