@@ -50,40 +50,43 @@ export async function GET(req: NextRequest) {
   const sidoName    = searchParams.get('sidoName')    ?? '';
   const sigunguName = searchParams.get('sigunguName') ?? '';
 
-  const params = new URLSearchParams({
+  // 공통 파라미터 (모든 페이지 호출에 사용)
+  const baseParams: Record<string, string> = {
     serviceKey,
     callTp:    'L',
-    pageNo:    '1',
     numOfRows: '100',
-    sidoCd,                             // ← 시도 코드 전달 (API 서버 필터링)
-    ...(searchParams.get('lifeArray')   && { lifeArray:   searchParams.get('lifeArray')! }),
-    ...(searchParams.get('srchKeyCode') && { srchKeyCode: searchParams.get('srchKeyCode')! }),
-  });
+    sidoCd,                          // ← sidoCd 항상 포함
+  };
+
+  if (searchParams.get('lifeArray'))   baseParams.lifeArray   = searchParams.get('lifeArray')!;
+  if (searchParams.get('srchKeyCode')) baseParams.srchKeyCode = searchParams.get('srchKeyCode')!;
 
   try {
-    const res  = await fetch(`${BASE_URL}?${params}`, { cache: 'no-store' });
-    const text = await res.text();
-
-    // totalCount 확인
-    const totalMatch = text.match(/<totalCount>(\d+)<\/totalCount>/);
+    // 1페이지 호출
+    const p1 = new URLSearchParams({ ...baseParams, pageNo: '1' });
+    const res1 = await fetch(`${BASE_URL}?${p1}`, { cache: 'no-store' });
+    const text1 = await res1.text();
+console.log('[local API raw response]', text1.slice(0, 500));
+    // totalCount 파싱
+    const totalMatch = text1.match(/<totalCount>(\d+)<\/totalCount>/);
     const totalCount = totalMatch ? parseInt(totalMatch[1]) : 0;
+    const totalPages = Math.ceil(totalCount / 100);
 
-    let allItems = parseLocalXml(text);
+    let allItems = parseLocalXml(text1);
 
-    // 100건 이상이면 2~3페이지 추가 호출 (최대 300건)
-    if (totalCount > 100) {
-      const extraPages = Math.min(Math.ceil(totalCount / 100), 3);
-      const pagePromises = Array.from({ length: extraPages - 1 }, (_, i) => {
-        const p = new URLSearchParams(params);
-        p.set('pageNo', String(i + 2));
-        return fetch(`${BASE_URL}?${p}`, { cache: 'no-store' }).then(r => r.text());
-      });
-
-      const extraTexts = await Promise.all(pagePromises);
+    // 2~3페이지 추가 호출 (최대 300건)
+    if (totalPages > 1) {
+      const extraCount = Math.min(totalPages - 1, 2);
+      const extraTexts = await Promise.all(
+        Array.from({ length: extraCount }, (_, i) => {
+          const p = new URLSearchParams({ ...baseParams, pageNo: String(i + 2) });
+          return fetch(`${BASE_URL}?${p}`, { cache: 'no-store' }).then(r => r.text());
+        })
+      );
       extraTexts.forEach(t => allItems.push(...parseLocalXml(t)));
     }
 
-    // ── 클라이언트 텍스트 기반 시도/시군구 필터링 ──────────
+    // ── 시도/시군구 텍스트 필터링 ──────────────────────────
     const sidoShort = sidoName.slice(0, 2); // '인천', '서울' 등
 
     let filtered = allItems;
@@ -93,10 +96,8 @@ export async function GET(req: NextRequest) {
         const itemSido    = (item.ctpvNm ?? '').trim();
         const itemSigungu = (item.sggNm  ?? '').trim();
 
-        // 시도 매칭
         if (itemSido && !itemSido.includes(sidoShort)) return false;
 
-        // 시군구 매칭 ('전체' 또는 비어있으면 생략)
         if (sigunguName && sigunguName !== '전체' && itemSigungu) {
           const sg = sigunguName.replace(/시$|구$|군$/, '').trim();
           if (sg && !itemSigungu.includes(sg)) return false;
