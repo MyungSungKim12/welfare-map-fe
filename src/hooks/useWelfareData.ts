@@ -73,7 +73,7 @@ export function useWelfareData(
 
       const results = await Promise.allSettled(requests);
 
-      const localItems: WelfareItem[] =
+      const localItems: any[] =
         results[0].status === 'fulfilled'
           ? (await results[0].value.json()).items ?? [] : [];
 
