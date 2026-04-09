@@ -103,6 +103,11 @@ export default function WelfareList({ filter, location, keyword }: Props) {
                 : '검색 결과가 없습니다'
             }
           </p>
+          {!isLoading && allItems.length > 0 && (
+            <p style={{ fontSize: '1.2rem', color: '#8A7F72', marginTop: '0.4rem' }}>
+              📌 선택 지역 복지 + 전국 공통 복지 포함
+            </p>
+          )}
         </ListHeader>
 
         {isLoading && (

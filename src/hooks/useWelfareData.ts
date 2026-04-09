@@ -54,46 +54,35 @@ export function useWelfareData(
       const localParams = new URLSearchParams({
         numOfRows: '100',
         sidoCd,
+        sidoName:    location?.sidoName    ?? '',
+        sigunguName: sigunguName !== '전체' ? sigunguName : '',
         ...(lifeArray   && { lifeArray }),
         ...(srchKeyCode && { srchKeyCode }),
       });
       
-      const requests: Promise<Response>[] = [
-        fetch(`/api/welfare/local?${localParams}`),
-      ];
-
-      if (lifeArray || srchKeyCode || keyword) {
-        const nationalParams = new URLSearchParams({
-          numOfRows: '50',
-          ...(lifeArray   && { lifeArray }),
-          ...(srchKeyCode && { srchKeyCode }),
-        });
-        requests.push(fetch(`/api/welfare/national?${nationalParams}`));
-      }
-
-      const results = await Promise.allSettled(requests);
-
-      const localItems: any[] =
-        results[0].status === 'fulfilled'
-          ? (await results[0].value.json()).items ?? [] : [];
-
-      const nationalItems: WelfareItem[] =
-        results[1]?.status === 'fulfilled'
-          ? (await (results[1] as PromiseFulfilledResult<Response>).value.json()).items ?? [] : [];
-      const filteredLocal = localItems.filter((item: any) => {
-        const itemSido    = item.ctpvNm ?? '';
-        const itemSigungu = item.sggNm  ?? '';
-        if (!itemSido.includes(sidoShort)) return false;
-        if (sigunguName && itemSigungu) {
-          const sg = sigunguName.replace(/시$|구$|군$/, '');
-          if (!itemSigungu.includes(sg)) return false;
-        }
-        return true;
+      const nationalParams = new URLSearchParams({
+        numOfRows: '100',
+        ...(lifeArray   && { lifeArray }),
+        ...(srchKeyCode && { srchKeyCode }),
       });
 
-      let merged = [...filteredLocal, ...nationalItems].filter(
-        (item, idx, arr) => arr.findIndex((i) => i.id === item.id) === idx && item.id
-      );
+      const [localRes, nationalRes] = await Promise.allSettled([
+        fetch(`/api/welfare/local?${localParams}`),
+        fetch(`/api/welfare/national?${nationalParams}`),
+      ]);
+
+      const localItems: any[] =
+        localRes.status === 'fulfilled'
+          ? (await localRes.value.json()).items ?? [] : [];
+
+      const nationalItems: WelfareItem[] =
+        nationalRes.status === 'fulfilled'
+          ? (await (nationalRes as PromiseFulfilledResult<Response>).value.json()).items ?? [] : [];
+      
+      let merged = [...localItems, ...nationalItems].filter(
+        (item, idx, arr) =>
+          arr.findIndex((i: any) => i.id === item.id) === idx && item.id
+      ) as WelfareItem[];
 
       // 검색어 클라이언트 필터링
       if (keyword?.trim()) {
