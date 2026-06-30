@@ -9,19 +9,22 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ error: '좌표가 필요합니다.' }, { status: 400 });
   }
 
+  const key = process.env.KAKAO_REST_API_KEY;
+  if (!key) {
+    return NextResponse.json({ error: '카카오 API 키가 설정되지 않았습니다.' }, { status: 500 });
+  }
+
   try {
-    const res = await fetch(
+    const response = await fetch(
       `https://dapi.kakao.com/v2/local/geo/coord2regioncode.json?x=${x}&y=${y}`,
       {
-        headers: {
-          Authorization: `KakaoAK ${process.env.KAKAO_REST_API_KEY}`,
-        },
+        headers: { Authorization: `KakaoAK ${key}` },
         cache: 'no-store',
-      }
+      },
     );
-    const data = await res.json();
+    const data = await response.json();
     return NextResponse.json(data);
-  } catch (e) {
+  } catch {
     return NextResponse.json({ error: '카카오 API 오류' }, { status: 500 });
   }
 }

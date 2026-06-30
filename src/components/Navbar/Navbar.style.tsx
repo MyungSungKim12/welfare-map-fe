@@ -7,75 +7,134 @@ export const NavbarWrapper = styled.header`
   top: 0;
   z-index: 100;
   width: 100%;
-  height: 64px;
-  background: #ffffff;
-  border-bottom: 1px solid rgba(0, 0, 0, 0.08);
-  display: flex;
+  min-height: 72px;
+  background: rgba(255, 255, 255, 0.86);
+  border-bottom: 1px solid rgba(220, 231, 225, 0.9);
+  backdrop-filter: blur(18px);
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
   align-items: center;
-  padding: 0 2.4rem;
-  justify-content: space-between;
+  gap: 1.6rem;
+  padding: 1.2rem clamp(1.6rem, 4vw, 4rem);
+
+  @media (max-width: 720px) {
+    grid-template-columns: 1fr auto;
+    min-height: auto;
+  }
 `;
 
-export const Logo = styled.div`
-  display: flex;
+export const Logo = styled.button`
+  display: inline-flex;
   align-items: center;
   gap: 0.8rem;
+  justify-self: start;
+  border: 0;
+  background: transparent;
+  color: var(--color-ink);
   cursor: pointer;
 
-  .logo_icon {
-    font-size: 2.4rem;
+  .logo_mark {
+    width: 38px;
+    height: 38px;
+    border-radius: 10px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--color-navy);
+    color: #ffffff;
   }
 
   .logo_text {
     font-size: 2rem;
-    font-weight: 700;
-    color: #2B5CE6;
-    letter-spacing: -0.02em;
+    font-weight: 800;
+  }
+
+  .logo_badge {
+    padding: 0.35rem 0.7rem;
+    border-radius: 999px;
+    background: var(--color-teal-soft);
+    color: var(--color-teal-dark);
+    font-size: 1.15rem;
+    font-weight: 800;
+  }
+
+  @media (max-width: 520px) {
+    .logo_badge { display: none; }
   }
 `;
 
-export const LocationBadge = styled.div`
-  display: flex;
+export const LocationBadge = styled.button`
+  justify-self: center;
+  display: inline-flex;
   align-items: center;
-  gap: 0.6rem;
-  padding: 0.8rem 1.4rem;
-  background: #F0F4FF;
-  border: 1px solid #D0DCFF;
+  gap: 0.7rem;
+  padding: 1rem 1.5rem;
+  border: 1px solid var(--color-line);
   border-radius: 999px;
-  font-size: 1.4rem;
-  color: #2B5CE6;
-  font-weight: 500;
+  background: #ffffff;
+  color: var(--color-navy);
+  font-size: 1.45rem;
+  font-weight: 700;
   cursor: pointer;
-  transition: all 0.2s ease;
+  box-shadow: var(--shadow-sm);
+  transition: border-color 0.2s, color 0.2s, transform 0.2s;
 
   &:hover {
-    background: #E0EAFF;
+    border-color: var(--color-teal);
+    color: var(--color-teal-dark);
+    transform: translateY(-1px);
   }
 
-  .location_icon {
-    font-size: 1.6rem;
+  @media (max-width: 720px) {
+    grid-column: 1 / -1;
+    width: 100%;
+    justify-content: center;
+    order: 3;
   }
 `;
 
 export const NavRight = styled.div`
+  justify-self: end;
   display: flex;
   align-items: center;
-  gap: 1.2rem;
+  gap: 0.8rem;
+`;
+
+export const IconButton = styled.button`
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
+  border: 1px solid var(--color-line);
+  background: #ffffff;
+  color: var(--color-navy);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+
+  &:hover {
+    border-color: var(--color-teal);
+    color: var(--color-teal-dark);
+  }
 `;
 
 export const LoginButton = styled.button`
-  padding: 0.8rem 2rem;
-  border: 1px solid #2B5CE6;
-  border-radius: 8px;
-  background: transparent;
-  color: #2B5CE6;
-  font-size: 1.4rem;
-  font-weight: 500;
+  min-height: 44px;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.7rem;
+  padding: 0 1.5rem;
+  border: 0;
+  border-radius: 12px;
+  background: var(--color-teal);
+  color: #ffffff;
+  font-size: 1.45rem;
+  font-weight: 800;
   cursor: pointer;
-  transition: all 0.2s ease;
+  transition: background 0.2s, transform 0.2s;
 
   &:hover {
-    background: #2B5CE6;
-    color: #ffffff;
+    background: var(--color-teal-dark);
+    transform: translateY(-1px);
   }
 `;

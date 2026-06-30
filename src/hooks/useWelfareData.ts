@@ -1,42 +1,72 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
-import { WelfareItem, FilterType } from '@/types/welfare';
+import { useCallback, useEffect, useState } from 'react';
+import { FilterType, WelfareItem } from '@/types/welfare';
 import { LocationInfo } from '@/hooks/useLocation';
 
 const PAGE_SIZE = 5;
 
 const AGE_TO_LIFE_CODE: Record<string, string> = {
-  child:  '001', youth:  '003',
-  middle: '004', senior: '006', all: '',
+  child: '001',
+  youth: '003',
+  middle: '004',
+  senior: '006',
+  all: '',
 };
 
 const SITUATION_TO_KEY_CODE: Record<string, string> = {
-  newlywed: '010', pregnant:   '002',
-  job:      '004', disability: '003',
-  lowincome:'001', all:        '',
+  newlywed: '010',
+  pregnant: '002',
+  job: '004',
+  disability: '003',
+  lowincome: '001',
+  all: '',
 };
 
-interface UseWelfareDataReturn {
-  items:      WelfareItem[];
-  allItems:   WelfareItem[];
-  isLoading:  boolean;
-  error:      string | null;
-  page:       number;
+interface WelfareApiResponse {
+  items?: WelfareItem[];
+}
+
+export interface UseWelfareDataReturn {
+  items: WelfareItem[];
+  allItems: WelfareItem[];
+  isLoading: boolean;
+  error: string | null;
+  page: number;
   totalPages: number;
-  setPage:    (p: number) => void;
-  refetch:    () => void;
+  setPage: (page: number) => void;
+  refetch: () => void;
+}
+
+async function readItems(response: Response): Promise<WelfareItem[]> {
+  if (!response.ok) return [];
+  const data = (await response.json()) as WelfareApiResponse;
+  return data.items ?? [];
+}
+
+function dedupeItems(items: WelfareItem[]) {
+  const seen = new Set<string>();
+  return items.filter((item) => {
+    if (!item.id || seen.has(item.id)) return false;
+    seen.add(item.id);
+    return true;
+  });
 }
 
 export function useWelfareData(
-  filter?:   FilterType,
+  filter?: FilterType,
   location?: LocationInfo,
-  keyword?:  string,
+  keyword?: string,
 ): UseWelfareDataReturn {
-  const [allItems,  setAllItems]  = useState<WelfareItem[]>([]);
+  const [allItems, setAllItems] = useState<WelfareItem[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [error,     setError]     = useState<string | null>(null);
-  const [page,      setPage]      = useState(1);
+  const [error, setError] = useState<string | null>(null);
+  const [page, setPage] = useState(1);
+  const ageGroup = filter?.ageGroup;
+  const situation = filter?.situation;
+  const sidoCd = location?.sidoCd;
+  const sidoName = location?.sidoName;
+  const sigunguName = location?.sigunguName;
 
   const fetchData = useCallback(async () => {
     setIsLoading(true);
@@ -44,69 +74,64 @@ export function useWelfareData(
     setPage(1);
 
     try {
-      const lifeArray   = filter ? AGE_TO_LIFE_CODE[filter.ageGroup]      ?? '' : '';
-      const srchKeyCode = filter ? SITUATION_TO_KEY_CODE[filter.situation] ?? '' : '';
-      const sidoCd      = location?.sidoCd    ?? '28';
-      const sigunguCd   = location?.sigunguCd ?? '28177';
-      const sidoShort   = location?.sidoName?.slice(0, 2) ?? '인천';
-      const sigunguName = location?.sigunguName ?? '';
+      const lifeArray = ageGroup ? AGE_TO_LIFE_CODE[ageGroup] ?? '' : '';
+      const srchKeyCode = situation ? SITUATION_TO_KEY_CODE[situation] ?? '' : '';
+      const normalizedSigunguName = sigunguName === '전체' ? '' : sigunguName ?? '';
 
       const localParams = new URLSearchParams({
         numOfRows: '100',
-        sidoCd,
-        sidoName:    location?.sidoName    ?? '',
-        sigunguName: sigunguName !== '전체' ? sigunguName : '',
-        ...(lifeArray   && { lifeArray }),
-        ...(srchKeyCode && { srchKeyCode }),
-      });
-      
-      const nationalParams = new URLSearchParams({
-        numOfRows: '100',
-        ...(lifeArray   && { lifeArray }),
-        ...(srchKeyCode && { srchKeyCode }),
+        sidoCd: sidoCd ?? '28',
+        sidoName: sidoName ?? '인천광역시',
+        sigunguName: normalizedSigunguName,
       });
 
-      const [localRes, nationalRes] = await Promise.allSettled([
-        fetch(`/api/welfare/local?${localParams}`),
-        fetch(`/api/welfare/national?${nationalParams}`),
+      if (lifeArray) localParams.set('lifeArray', lifeArray);
+      if (srchKeyCode) localParams.set('srchKeyCode', srchKeyCode);
+
+      const nationalParams = new URLSearchParams({ numOfRows: '100' });
+      if (lifeArray) nationalParams.set('lifeArray', lifeArray);
+      if (srchKeyCode) nationalParams.set('srchKeyCode', srchKeyCode);
+
+      const [localResult, nationalResult] = await Promise.allSettled([
+        fetch(`/api/welfare/local?${localParams.toString()}`),
+        fetch(`/api/welfare/national?${nationalParams.toString()}`),
       ]);
 
-      const localItems: any[] =
-        localRes.status === 'fulfilled'
-          ? (await localRes.value.json()).items ?? [] : [];
+      const localItems = localResult.status === 'fulfilled' ? await readItems(localResult.value) : [];
+      const nationalItems = nationalResult.status === 'fulfilled' ? await readItems(nationalResult.value) : [];
+      let merged = dedupeItems([...localItems, ...nationalItems]);
 
-      const nationalItems: WelfareItem[] =
-        nationalRes.status === 'fulfilled'
-          ? (await (nationalRes as PromiseFulfilledResult<Response>).value.json()).items ?? [] : [];
-      
-      let merged = [...localItems, ...nationalItems].filter(
-        (item, idx, arr) =>
-          arr.findIndex((i: any) => i.id === item.id) === idx && item.id
-      ) as WelfareItem[];
-
-      // 검색어 클라이언트 필터링
       if (keyword?.trim()) {
-        const kw = keyword.trim().toLowerCase();
-        merged = merged.filter(
-          (item) =>
-            item.title.toLowerCase().includes(kw) ||
-            item.summary?.toLowerCase().includes(kw) ||
-            item.category?.toLowerCase().includes(kw)
+        const normalizedKeyword = keyword.trim().toLowerCase();
+        merged = merged.filter((item) =>
+          [item.title, item.summary, item.category, item.target, item.region]
+            .filter(Boolean)
+            .some((value) => value.toLowerCase().includes(normalizedKeyword))
         );
       }
 
       setAllItems(merged);
     } catch {
-      setError('복지 데이터를 불러오지 못했습니다.');
+      setError('복지 데이터를 불러오지 못했습니다. 잠시 후 다시 시도해주세요.');
+      setAllItems([]);
     } finally {
       setIsLoading(false);
     }
-  }, [filter?.ageGroup, filter?.situation, location?.sidoCd, location?.sigunguCd, location?.sigunguName, keyword]);
+  }, [
+    ageGroup,
+    keyword,
+    sidoCd,
+    sidoName,
+    sigunguName,
+    situation,
+  ]);
 
-  useEffect(() => { fetchData(); }, [fetchData]);
+  useEffect(() => {
+    fetchData();
+  }, [fetchData]);
 
   const totalPages = Math.max(1, Math.ceil(allItems.length / PAGE_SIZE));
-  const items      = allItems.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
+  const items = allItems.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
 
   return { items, allItems, isLoading, error, page, totalPages, setPage, refetch: fetchData };
 }

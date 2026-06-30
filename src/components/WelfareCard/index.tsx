@@ -1,96 +1,74 @@
 'use client';
 
+import { Bookmark, CalendarClock, ExternalLink, MapPin, UsersRound } from 'lucide-react';
 import { WelfareItem } from '@/types/welfare';
 import {
-  CardWrapper, CardLeft, CategoryBadge, CardTitle,
-  CardDesc, BadgeRow, Badge, CardRight, SaveBtn, DetailBtn,
+  CardWrapper,
+  CardLeft,
+  CategoryBadge,
+  CardTitle,
+  CardDesc,
+  BadgeRow,
+  Badge,
+  CardRight,
+  SaveBtn,
+  DetailBtn,
+  StatusBadge,
 } from './WelfareCard.style';
 
 interface Props {
   welfare: WelfareItem;
   isSaved: boolean;
-  onSave:  (id: string) => void;
+  onSave: (id: string) => void;
 }
 
-// 마감 D-day 계산
 function calcDday(applyEndDd?: string): number | null {
   if (!applyEndDd || applyEndDd.length < 8) return null;
-  const end = new Date(
-    `${applyEndDd.slice(0, 4)}-${applyEndDd.slice(4, 6)}-${applyEndDd.slice(6, 8)}`
-  );
+  const end = new Date(`${applyEndDd.slice(0, 4)}-${applyEndDd.slice(4, 6)}-${applyEndDd.slice(6, 8)}`);
   const today = new Date();
   today.setHours(0, 0, 0, 0);
-  const diff = Math.ceil((end.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
-  return diff;
+  return Math.ceil((end.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
 }
 
-// 신규 여부 판별 (30일 이내)
 function isNewService(lastModYmd?: string): boolean {
   if (!lastModYmd || lastModYmd.length < 8) return false;
-  const mod = new Date(
-    `${lastModYmd.slice(0, 4)}-${lastModYmd.slice(4, 6)}-${lastModYmd.slice(6, 8)}`
-  );
+  const mod = new Date(`${lastModYmd.slice(0, 4)}-${lastModYmd.slice(4, 6)}-${lastModYmd.slice(6, 8)}`);
   const today = new Date();
   const diff = Math.ceil((today.getTime() - mod.getTime()) / (1000 * 60 * 60 * 24));
   return diff <= 30;
 }
 
+function formatDate(value?: string) {
+  if (!value || value.length < 8) return null;
+  return `${value.slice(0, 4)}.${value.slice(4, 6)}.${value.slice(6, 8)}`;
+}
+
 export default function WelfareCard({ welfare, isSaved, onSave }: Props) {
-  const dday   = welfare.isAlways ? null : calcDday(welfare.applyEndDd);
-  const isNew  = isNewService(welfare.lastModYmd);
+  const dday = welfare.isAlways ? null : calcDday(welfare.applyEndDd);
+  const isNew = isNewService(welfare.lastModYmd);
   const isUrgent = dday !== null && dday >= 0 && dday <= 7;
   const isExpired = dday !== null && dday < 0;
+  const displayDate = formatDate(welfare.applyEndDd);
 
   return (
-    <CardWrapper style={{ opacity: isExpired ? 0.6 : 1 }}>
+    <CardWrapper $expired={isExpired}>
       <CardLeft>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', flexWrap: 'wrap' }}>
-          <CategoryBadge>{welfare.category.split(',')[0].trim()}</CategoryBadge>
-
-          {/* 마감임박 배지 */}
-          {isUrgent && (
-            <span style={{
-              background: '#FEF2F2', color: '#DC2626', border: '1px solid #FCA5A5',
-              borderRadius: '6px', padding: '0.2rem 0.8rem',
-              fontSize: '1.1rem', fontWeight: 700,
-            }}>
-              🔥 D-{dday}
-            </span>
-          )}
-
-          {/* 마감 완료 배지 */}
-          {isExpired && (
-            <span style={{
-              background: '#F3F4F6', color: '#9CA3AF', border: '1px solid #E5E7EB',
-              borderRadius: '6px', padding: '0.2rem 0.8rem',
-              fontSize: '1.1rem', fontWeight: 700,
-            }}>
-              마감완료
-            </span>
-          )}
-
-          {/* 신규 배지 */}
-          {isNew && !isExpired && (
-            <span style={{
-              background: '#ECFDF5', color: '#059669', border: '1px solid #A7F3D0',
-              borderRadius: '6px', padding: '0.2rem 0.8rem',
-              fontSize: '1.1rem', fontWeight: 700,
-            }}>
-              ✨ NEW
-            </span>
-          )}
+        <div className="card_top">
+          <CategoryBadge>{welfare.category.split(',')[0].trim() || '복지'}</CategoryBadge>
+          {isUrgent && <StatusBadge $tone="urgent">D-{dday}</StatusBadge>}
+          {isExpired && <StatusBadge $tone="expired">마감</StatusBadge>}
+          {isNew && !isExpired && <StatusBadge $tone="new">신규</StatusBadge>}
         </div>
 
         <CardTitle>{welfare.title}</CardTitle>
-        <CardDesc>{welfare.summary}</CardDesc>
+        <CardDesc>{welfare.summary || '상세 설명은 제공 기관의 원문에서 확인할 수 있습니다.'}</CardDesc>
 
         <BadgeRow>
-          <Badge $type="region">📍 {welfare.region}</Badge>
-          <Badge $type="target">👥 {welfare.target}</Badge>
+          <Badge $type="region"><MapPin size={14} />{welfare.region || '전국'}</Badge>
+          <Badge $type="target"><UsersRound size={14} />{welfare.target || '대상 확인 필요'}</Badge>
           <Badge $type="period">
-            📅 {welfare.isAlways ? '연중 상시' : (welfare.applyEndDd
-              ? `~${welfare.applyEndDd.slice(0,4)}.${welfare.applyEndDd.slice(4,6)}.${welfare.applyEndDd.slice(6,8)}`
-              : welfare.period)}
+            <CalendarClock size={14} />
+            {welfare.isAlways ? '상시 신청' : displayDate ? `${displayDate}까지` : welfare.period || '기간 확인 필요'}
           </Badge>
         </BadgeRow>
       </CardLeft>
@@ -98,10 +76,11 @@ export default function WelfareCard({ welfare, isSaved, onSave }: Props) {
       <CardRight>
         <SaveBtn
           onClick={() => onSave(welfare.id)}
-          title={isSaved ? '북마크 취소' : '북마크 저장'}
-          style={{ color: isSaved ? '#2E9E7A' : '#C0B8B0' }}
+          title={isSaved ? '저장 취소' : '관심 복지 저장'}
+          type="button"
+          $saved={isSaved}
         >
-          {isSaved ? '🔖' : '📋'}
+          <Bookmark size={18} fill={isSaved ? 'currentColor' : 'none'} />
         </SaveBtn>
         <DetailBtn
           as="a"
@@ -110,7 +89,8 @@ export default function WelfareCard({ welfare, isSaved, onSave }: Props) {
           rel="noopener noreferrer"
           title="상세 보기"
         >
-          →
+          <ExternalLink size={18} />
+          상세
         </DetailBtn>
       </CardRight>
     </CardWrapper>

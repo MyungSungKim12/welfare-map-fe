@@ -4,12 +4,12 @@ import styled from 'styled-components';
 
 export const MapWrapper = styled.div`
   width: 100%;
-  height: 480px;
-  border-radius: 14px;
+  height: 440px;
+  border-radius: 20px;
   overflow: hidden;
-  border: 1px solid #EDE8E0;
+  border: 1px solid var(--color-line);
   position: relative;
-  background: #E8EEF0;
+  background: var(--color-surface-soft);
 
   @media (max-width: 768px) {
     height: 320px;
@@ -27,74 +27,71 @@ export const MapControls = styled.div`
   right: 1.2rem;
   display: flex;
   flex-direction: column;
-  gap: 0.6rem;
+  gap: 0.7rem;
   z-index: 10;
 `;
 
 export const MapControlBtn = styled.button`
-  width: 40px;
-  height: 40px;
-  background: #ffffff;
-  border: 1px solid #EDE8E0;
-  border-radius: 8px;
-  font-size: 1.6rem;
-  cursor: pointer;
-  display: flex;
+  width: 42px;
+  height: 42px;
+  border: 1px solid var(--color-line);
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.92);
+  color: var(--color-navy);
+  display: inline-flex;
   align-items: center;
   justify-content: center;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-  transition: all 0.2s;
-
-  &:hover {
-    background: #F7F4EF;
-    border-color: #2E9E7A;
-  }
+  cursor: pointer;
+  box-shadow: var(--shadow-sm);
 `;
 
 export const MyLocationBtn = styled.button`
   position: absolute;
-  bottom: 1.6rem;
+  bottom: 1.4rem;
   right: 1.2rem;
   z-index: 10;
-  display: flex;
+  display: inline-flex;
   align-items: center;
   gap: 0.6rem;
-  padding: 0.9rem 1.6rem;
-  background: #2E9E7A;
-  border: none;
-  border-radius: 10px;
+  min-height: 44px;
+  padding: 0 1.4rem;
+  border: 0;
+  border-radius: 999px;
+  background: var(--color-teal);
   color: #ffffff;
-  font-size: 1.4rem;
-  font-weight: 600;
+  font-size: 1.35rem;
+  font-weight: 800;
   cursor: pointer;
-  box-shadow: 0 4px 12px rgba(46,158,122,0.35);
-  transition: all 0.2s;
+  box-shadow: 0 12px 24px rgba(20, 134, 109, 0.24);
 
-  &:hover { background: #247A5E; }
-  &:disabled { background: #9CA3AF; cursor: not-allowed; box-shadow: none; }
+  &:disabled {
+    opacity: 0.72;
+    cursor: wait;
+  }
 `;
 
 export const LoadingOverlay = styled.div`
   position: absolute;
   inset: 0;
-  background: #E8EEF0;
+  z-index: 5;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 1.2rem;
-  z-index: 5;
+  gap: 1rem;
+  background: var(--color-surface-soft);
 
   .loading_text {
-    font-size: 1.5rem;
-    color: #8A7F72;
+    color: var(--color-muted);
+    font-size: 1.45rem;
+    font-weight: 700;
   }
 
   .loading_spinner {
     width: 36px;
     height: 36px;
-    border: 3px solid #EDE8E0;
-    border-top-color: #2E9E7A;
+    border: 3px solid #d7e5de;
+    border-top-color: var(--color-teal);
     border-radius: 50%;
     animation: spin 0.8s linear infinite;
   }
@@ -106,46 +103,64 @@ export const LoadingOverlay = styled.div`
 
 export const MarkerInfoBox = styled.div`
   position: absolute;
-  bottom: 5rem;
   left: 50%;
-  transform: translateX(-50%);
+  bottom: 5.2rem;
   z-index: 10;
+  width: min(340px, calc(100% - 2.4rem));
+  transform: translateX(-50%);
+  padding: 1.6rem;
+  border: 1px solid var(--color-line);
+  border-radius: 18px;
   background: #ffffff;
-  border: 1px solid #EDE8E0;
-  border-radius: 12px;
-  padding: 1.4rem 2rem;
-  min-width: 240px;
-  max-width: 320px;
-  box-shadow: 0 4px 16px rgba(0,0,0,0.12);
+  box-shadow: var(--shadow-md);
 
   .info_category {
+    color: var(--color-teal-dark);
     font-size: 1.2rem;
-    font-weight: 600;
-    color: #2E9E7A;
-    margin-bottom: 0.4rem;
+    font-weight: 800;
+    margin-bottom: 0.5rem;
+    padding-right: 2.6rem;
   }
 
   .info_name {
-    font-size: 1.6rem;
-    font-weight: 700;
-    color: #1B2D38;
-    margin-bottom: 0.4rem;
+    color: var(--color-ink);
+    font-size: 1.65rem;
+    font-weight: 800;
+    line-height: 1.4;
+    margin-bottom: 0.5rem;
+    padding-right: 2.6rem;
   }
 
   .info_address {
-    font-size: 1.3rem;
-    color: #8A7F72;
+    color: var(--color-muted);
+    font-size: 1.32rem;
+    font-weight: 700;
   }
 
   .info_close {
     position: absolute;
-    top: 0.8rem;
-    right: 0.8rem;
-    background: none;
-    border: none;
-    font-size: 1.6rem;
-    color: #8A7F72;
+    top: 1rem;
+    right: 1rem;
+    width: 34px;
+    height: 34px;
+    min-height: 34px;
+    border: 0;
+    border-radius: 999px;
+    background: var(--color-surface-soft);
+    color: var(--color-muted);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
     cursor: pointer;
-    line-height: 1;
+  }
+
+  a {
+    display: inline-flex;
+    margin-top: 1rem;
+    color: var(--color-teal-dark);
+    font-size: 1.35rem;
+    font-weight: 800;
+    text-decoration: underline;
+    text-underline-offset: 3px;
   }
 `;

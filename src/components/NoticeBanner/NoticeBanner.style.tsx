@@ -4,9 +4,7 @@ import styled from 'styled-components';
 
 export const BannerWrapper = styled.section`
   width: 100%;
-  background: #F7F4EF;
-  padding: 3rem 2rem;
-  border-bottom: 1px solid #EDE8E0;
+  padding: 0 clamp(1.6rem, 4vw, 4rem) 4.4rem;
 `;
 
 export const BannerInner = styled.div`
@@ -14,57 +12,59 @@ export const BannerInner = styled.div`
   margin: 0 auto;
   display: grid;
   grid-template-columns: repeat(3, 1fr);
-  gap: 1.6rem;
+  gap: 1.4rem;
 
-  @media (max-width: 768px) {
+  @media (max-width: 900px) {
     grid-template-columns: 1fr;
   }
 `;
 
-export const BannerCard = styled.div<{ $type: 'new' | 'urgent' | 'guide' }>`
-  display: flex;
-  align-items: center;
-  gap: 1.4rem;
-  padding: 1.8rem 2rem;
+export const BannerCard = styled.article<{ $type: 'new' | 'urgent' | 'guide' }>`
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 1.3rem;
+  padding: 1.8rem;
   background: #ffffff;
-  border-radius: 12px;
-  border-left: 4px solid ${({ $type }) =>
-    $type === 'new' ? '#2E9E7A' :
-    $type === 'urgent' ? '#E74C3C' : '#F39C12'};
-  cursor: pointer;
-  transition: all 0.2s;
+  border: 1px solid var(--color-line);
+  border-radius: 18px;
+  box-shadow: 0 10px 28px rgba(16, 32, 39, 0.05);
 
-  &:hover { box-shadow: 0 4px 12px rgba(0,0,0,0.08); }
+  .banner_icon {
+    width: 44px;
+    height: 44px;
+    border-radius: 12px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    color: ${({ $type }) =>
+      $type === 'urgent' ? 'var(--color-red)' :
+      $type === 'new' ? 'var(--color-teal-dark)' : 'var(--color-amber)'};
+    background: ${({ $type }) =>
+      $type === 'urgent' ? 'var(--color-red-soft)' :
+      $type === 'new' ? 'var(--color-teal-soft)' : 'var(--color-amber-soft)'};
+  }
 
-  .banner_icon { font-size: 2.4rem; flex-shrink: 0; }
+  .banner_badge {
+    display: inline-flex;
+    margin-bottom: 0.6rem;
+    color: ${({ $type }) =>
+      $type === 'urgent' ? 'var(--color-red)' :
+      $type === 'new' ? 'var(--color-teal-dark)' : 'var(--color-amber)'};
+    font-size: 1.2rem;
+    font-weight: 800;
+  }
 
-  .banner_content {
-    .banner_badge {
-      display: inline-block;
-      font-size: 1.1rem;
-      font-weight: 700;
-      padding: 0.2rem 0.8rem;
-      border-radius: 4px;
-      margin-bottom: 0.4rem;
-      background: ${({ $type }) =>
-        $type === 'new' ? '#E8F4F0' :
-        $type === 'urgent' ? '#FDECEA' : '#FEF3E8'};
-      color: ${({ $type }) =>
-        $type === 'new' ? '#2E9E7A' :
-        $type === 'urgent' ? '#E74C3C' : '#F39C12'};
-    }
+  .banner_title {
+    color: var(--color-ink);
+    font-size: 1.6rem;
+    font-weight: 800;
+    line-height: 1.45;
+  }
 
-    .banner_title {
-      font-size: 1.5rem;
-      font-weight: 700;
-      color: #1B2D38;
-      line-height: 1.4;
-    }
-
-    .banner_desc {
-      font-size: 1.3rem;
-      color: #8A7F72;
-      margin-top: 0.2rem;
-    }
+  .banner_desc {
+    margin-top: 0.5rem;
+    color: var(--color-muted);
+    font-size: 1.35rem;
+    line-height: 1.55;
   }
 `;

@@ -1,47 +1,92 @@
 'use client';
 
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
+import { ArrowUpRight, Clock3, Flame, Sparkles } from 'lucide-react';
 import {
-  PopularWrapper, PopularInner, SectionHeader,
-  TabGroup, TabBtn, CardScroll, PopularCard,
-  UrgentBadge, NewBadge,
+  PopularWrapper,
+  PopularInner,
+  SectionHeader,
+  TabGroup,
+  TabBtn,
+  CardScroll,
+  PopularCard,
+  StatusBadge,
 } from './PopularList.style';
+import { RankedWelfareItem, WelfareInsights } from '@/utils/welfareInsights';
 
-const TABS = ['많이 본 복지', '마감 임박', '신규 등록'];
+interface Props {
+  insights: WelfareInsights;
+  isLoading: boolean;
+}
 
-const DUMMY = [
-  { rank: 1, title: '어르신 무료 건강검진 지원', target: '만 65세 이상', badge: null },
-  { rank: 2, title: '청년 취업 준비금 지원', target: '만 19~34세 청년', badge: 'urgent' },
-  { rank: 3, title: '신혼부부 전세자금 이자 지원', target: '신혼부부', badge: null },
-  { rank: 4, title: '임산부 영양제 무료 지원', target: '임산부', badge: 'new' },
-  { rank: 5, title: '장애인 보조기기 지원사업', target: '장애인', badge: null },
-];
+const TABS = ['맞춤 후보', '마감 임박', '새로 등록'];
 
-export default function PopularList() {
+function getTabItems(activeTab: number, insights: WelfareInsights) {
+  if (activeTab === 1) return insights.urgentItems;
+  if (activeTab === 2) return insights.newItems;
+  return insights.recommendedItems;
+}
+
+function getTargetText(item: RankedWelfareItem) {
+  return [item.region || '전국', item.target || '대상 확인 필요'].filter(Boolean).join(' · ');
+}
+
+export default function PopularList({ insights, isLoading }: Props) {
   const [activeTab, setActiveTab] = useState(0);
+  const items = useMemo(() => getTabItems(activeTab, insights).slice(0, 5), [activeTab, insights]);
 
   return (
     <PopularWrapper>
       <PopularInner>
         <SectionHeader>
-          <h2>인기 복지 서비스</h2>
-          <TabGroup>
-            {TABS.map((t, i) => (
-              <TabBtn key={t} $active={activeTab === i} onClick={() => setActiveTab(i)}>
-                {t}
+          <div>
+            <span>추천 레이더</span>
+            <h2>지금 먼저 볼 지원 후보</h2>
+          </div>
+          <TabGroup aria-label="추천 유형">
+            {TABS.map((tab, index) => (
+              <TabBtn key={tab} $active={activeTab === index} onClick={() => setActiveTab(index)} type="button">
+                {index === 0 && <Sparkles size={15} />}
+                {index === 1 && <Clock3 size={15} />}
+                {index === 2 && <Flame size={15} />}
+                {tab}
               </TabBtn>
             ))}
           </TabGroup>
         </SectionHeader>
 
         <CardScroll>
-          {DUMMY.map((item) => (
-            <PopularCard key={item.rank}>
-              {item.badge === 'urgent' && <UrgentBadge>마감임박</UrgentBadge>}
-              {item.badge === 'new' && <NewBadge>신규</NewBadge>}
-              <p className="card_rank">TOP {item.rank}</p>
+          {isLoading && [1, 2, 3, 4, 5].map((rank) => (
+            <PopularCard key={rank}>
+              <StatusBadge $tone="default">조회 중</StatusBadge>
+              <p className="card_rank">TOP {rank}</p>
+              <p className="card_title">복지 후보를 불러오고 있습니다</p>
+              <p className="card_target">잠시만 기다려주세요</p>
+            </PopularCard>
+          ))}
+
+          {!isLoading && items.length === 0 && (
+            <PopularCard>
+              <StatusBadge $tone="default">결과 없음</StatusBadge>
+              <p className="card_rank">조건 변경</p>
+              <p className="card_title">표시할 지원 후보가 없습니다</p>
+              <p className="card_target">위치나 맞춤 조건을 바꿔 다시 확인해보세요.</p>
+            </PopularCard>
+          )}
+
+          {!isLoading && items.map((item, index) => (
+            <PopularCard
+              key={item.id}
+              as={item.link ? 'a' : 'article'}
+              href={item.link || undefined}
+              target={item.link ? '_blank' : undefined}
+              rel={item.link ? 'noopener noreferrer' : undefined}
+            >
+              <StatusBadge $tone={item.insightTone}>{item.insightBadge}</StatusBadge>
+              <p className="card_rank">TOP {index + 1}</p>
               <p className="card_title">{item.title}</p>
-              <p className="card_target">{item.target}</p>
+              <p className="card_target">{getTargetText(item)}</p>
+              <span className="card_link">자세히 보기 <ArrowUpRight size={15} /></span>
             </PopularCard>
           ))}
         </CardScroll>

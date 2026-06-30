@@ -4,115 +4,140 @@ import styled from 'styled-components';
 
 export const PopularWrapper = styled.section`
   width: 100%;
-  background: #ffffff;
-  padding: 6rem 2rem;
-  border-bottom: 1px solid #EDE8E0;
+  padding: 0 clamp(1.6rem, 4vw, 4rem) 5rem;
 `;
 
 export const PopularInner = styled.div`
   max-width: 1280px;
   margin: 0 auto;
+  padding: 2rem;
+  border: 1px solid var(--color-line);
+  border-radius: 24px;
+  background: rgba(255, 255, 255, 0.78);
+  box-shadow: var(--shadow-sm);
 `;
 
 export const SectionHeader = styled.div`
   display: flex;
-  align-items: center;
+  align-items: flex-end;
   justify-content: space-between;
-  margin-bottom: 2.4rem;
-  flex-wrap: wrap;
-  gap: 1.2rem;
+  gap: 1.6rem;
+  margin-bottom: 1.6rem;
+
+  span {
+    color: var(--color-teal-dark);
+    font-size: 1.3rem;
+    font-weight: 800;
+  }
 
   h2 {
-    font-size: clamp(2rem, 3vw, 2.6rem);
+    margin-top: 0.4rem;
+    color: var(--color-ink);
+    font-size: clamp(2.1rem, 3vw, 2.8rem);
     font-weight: 800;
-    color: #1B2D38;
+  }
+
+  @media (max-width: 760px) {
+    align-items: stretch;
+    flex-direction: column;
   }
 `;
 
 export const TabGroup = styled.div`
   display: flex;
-  gap: 0.8rem;
+  gap: 0.7rem;
+  flex-wrap: wrap;
 `;
 
 export const TabBtn = styled.button<{ $active: boolean }>`
-  padding: 0.8rem 1.6rem;
-  border-radius: 8px;
-  border: 1.5px solid ${({ $active }) => $active ? '#2E9E7A' : '#D5CEC4'};
-  background: ${({ $active }) => $active ? '#2E9E7A' : '#fff'};
-  color: ${({ $active }) => $active ? '#fff' : '#6B6058'};
-  font-size: 1.4rem;
-  font-weight: 600;
+  min-height: 42px;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.55rem;
+  padding: 0 1.3rem;
+  border-radius: 999px;
+  border: 1px solid ${({ $active }) => ($active ? 'var(--color-teal)' : 'var(--color-line)')};
+  background: ${({ $active }) => ($active ? 'var(--color-teal)' : '#ffffff')};
+  color: ${({ $active }) => ($active ? '#ffffff' : 'var(--color-muted)')};
+  font-size: 1.35rem;
+  font-weight: 800;
   cursor: pointer;
-  transition: all 0.2s;
 `;
 
 export const CardScroll = styled.div`
   display: grid;
-  grid-template-columns: repeat(5, 1fr);
-  gap: 1.4rem;
+  grid-template-columns: repeat(5, minmax(190px, 1fr));
+  gap: 1.2rem;
   overflow-x: auto;
   padding-bottom: 0.4rem;
 
-  @media (max-width: 1024px) {
-    grid-template-columns: repeat(3, minmax(240px, 1fr));
+  @media (max-width: 1060px) {
+    grid-template-columns: repeat(5, minmax(230px, 1fr));
   }
 `;
 
-export const PopularCard = styled.div`
-  background: #F7F4EF;
-  border-radius: 14px;
-  padding: 2rem;
-  border: 1px solid #EDE8E0;
-  cursor: pointer;
-  transition: all 0.2s;
-  position: relative;
+export const PopularCard = styled.article`
+  min-height: 210px;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  padding: 1.7rem;
+  background: #ffffff;
+  border: 1px solid var(--color-line);
+  border-radius: 18px;
+  color: inherit;
+  text-decoration: none;
+  transition: transform 0.2s, border-color 0.2s;
 
   &:hover {
-    border-color: #2E9E7A;
-    background: #E8F4F0;
+    transform: translateY(-3px);
+    border-color: rgba(20, 134, 109, 0.38);
   }
 
   .card_rank {
-    font-size: 1.3rem;
+    margin-top: 1.6rem;
+    color: var(--color-teal-dark);
+    font-size: 1.25rem;
     font-weight: 800;
-    color: #2E9E7A;
-    margin-bottom: 0.8rem;
   }
 
   .card_title {
-    font-size: 1.6rem;
-    font-weight: 700;
-    color: #1B2D38;
-    line-height: 1.4;
-    margin-bottom: 0.8rem;
+    margin-top: 0.6rem;
+    color: var(--color-ink);
+    font-size: 1.65rem;
+    font-weight: 800;
+    line-height: 1.45;
   }
 
   .card_target {
-    font-size: 1.3rem;
-    color: #8A7F72;
+    margin-top: 0.7rem;
+    color: var(--color-muted);
+    font-size: 1.35rem;
+  }
+
+  .card_link {
+    margin-top: auto;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    color: var(--color-navy);
+    font-size: 1.35rem;
+    font-weight: 800;
   }
 `;
 
-export const UrgentBadge = styled.span`
-  position: absolute;
-  top: 1.2rem;
-  right: 1.2rem;
-  background: #FDECEA;
-  color: #E74C3C;
-  font-size: 1.1rem;
-  font-weight: 700;
-  padding: 0.2rem 0.8rem;
-  border-radius: 4px;
-`;
-
-export const NewBadge = styled.span`
-  position: absolute;
-  top: 1.2rem;
-  right: 1.2rem;
-  background: #E8F4F0;
-  color: #2E9E7A;
-  font-size: 1.1rem;
-  font-weight: 700;
-  padding: 0.2rem 0.8rem;
-  border-radius: 4px;
+export const StatusBadge = styled.span<{ $tone: 'urgent' | 'new' | 'default' }>`
+  display: inline-flex;
+  align-items: center;
+  min-height: 28px;
+  padding: 0 0.9rem;
+  border-radius: 999px;
+  background: ${({ $tone }) =>
+    $tone === 'urgent' ? 'var(--color-red-soft)' :
+    $tone === 'new' ? 'var(--color-teal-soft)' : 'var(--color-surface-soft)'};
+  color: ${({ $tone }) =>
+    $tone === 'urgent' ? 'var(--color-red)' :
+    $tone === 'new' ? 'var(--color-teal-dark)' : 'var(--color-navy)'};
+  font-size: 1.15rem;
+  font-weight: 800;
 `;

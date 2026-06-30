@@ -1,153 +1,111 @@
 'use client';
 
+import { RefreshCw } from 'lucide-react';
 import WelfareCard from '@/components/WelfareCard';
 import { ListWrapper, ListHeader, EmptyState } from './WelfareList.style';
-import { useWelfareData } from '@/hooks/useWelfareData';
-import { FilterType } from '@/types/welfare';
-import { LocationInfo } from '@/hooks/useLocation';
+import { UseWelfareDataReturn } from '@/hooks/useWelfareData';
 
 interface Props {
-  filter?:   FilterType;
-  location?: LocationInfo;
-  keyword?:  string;
+  data: UseWelfareDataReturn;
 }
 
 function SkeletonCard() {
   return (
-    <div style={{
-      background: '#ffffff', border: '1px solid #EDE8E0',
-      borderRadius: '14px', padding: '2.2rem 2.4rem',
-      display: 'flex', flexDirection: 'column', gap: '1rem',
-    }}>
-      {[80, 60, 40].map((w) => (
-        <div key={w} style={{
-          height: '16px', width: `${w}%`,
-          background: 'linear-gradient(90deg,#f0f0f0 25%,#e0e0e0 50%,#f0f0f0 75%)',
-          backgroundSize: '200% 100%', borderRadius: '6px',
-          animation: 'shimmer 1.5s infinite',
-        }} />
-      ))}
+    <div className="skeleton-card">
+      <span />
+      <span />
+      <span />
     </div>
   );
 }
 
 function Pagination({ page, totalPages, setPage }: {
-  page: number; totalPages: number; setPage: (p: number) => void;
+  page: number;
+  totalPages: number;
+  setPage: (p: number) => void;
 }) {
   if (totalPages <= 1) return null;
 
-  // 최대 5개 페이지 버튼 표시
   const start = Math.max(1, Math.min(page - 2, totalPages - 4));
-  const end   = Math.min(totalPages, start + 4);
-  const pages = Array.from({ length: end - start + 1 }, (_, i) => start + i);
-
-  const btnStyle = (active: boolean, disabled = false) => ({
-    padding: '0.7rem 1.2rem',
-    border: `1.5px solid ${active ? '#1B3A4B' : '#D5CEC4'}`,
-    borderRadius: '8px',
-    background: active ? '#1B3A4B' : '#fff',
-    color: active ? '#fff' : disabled ? '#C0B8B0' : '#6B6058',
-    cursor: disabled ? 'not-allowed' : 'pointer',
-    fontSize: '1.4rem',
-    fontWeight: active ? 700 : 400,
-    opacity: disabled ? 0.5 : 1,
-    minWidth: '36px',
-  } as React.CSSProperties);
+  const end = Math.min(totalPages, start + 4);
+  const pages = Array.from({ length: end - start + 1 }, (_, index) => start + index);
 
   return (
-    <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '0.6rem', marginTop: '2.4rem' }}>
-      <button style={btnStyle(false, page === 1)} onClick={() => setPage(Math.max(1, page - 1))} disabled={page === 1}>
-        ‹
-      </button>
-      {start > 1 && (
-        <>
-          <button style={btnStyle(false)} onClick={() => setPage(1)}>1</button>
-          {start > 2 && <span style={{ color: '#8A7F72', fontSize: '1.4rem' }}>···</span>}
-        </>
-      )}
+    <div className="pagination">
+      <button onClick={() => setPage(Math.max(1, page - 1))} disabled={page === 1}>이전</button>
       {pages.map((p) => (
-        <button key={p} style={btnStyle(p === page)} onClick={() => setPage(p)}>{p}</button>
+        <button key={p} className={p === page ? 'active' : ''} onClick={() => setPage(p)}>
+          {p}
+        </button>
       ))}
-      {end < totalPages && (
-        <>
-          {end < totalPages - 1 && <span style={{ color: '#8A7F72', fontSize: '1.4rem' }}>···</span>}
-          <button style={btnStyle(false)} onClick={() => setPage(totalPages)}>{totalPages}</button>
-        </>
-      )}
-      <button style={btnStyle(false, page === totalPages)} onClick={() => setPage(Math.min(totalPages, page + 1))} disabled={page === totalPages}>
-        ›
-      </button>
+      <button onClick={() => setPage(Math.min(totalPages, page + 1))} disabled={page === totalPages}>다음</button>
     </div>
   );
 }
 
-export default function WelfareList({ filter, location, keyword }: Props) {
-  const { items, allItems, isLoading, error, page, totalPages, setPage, refetch } = useWelfareData(filter, location, keyword);
+export default function WelfareList({ data }: Props) {
+  const { items, allItems, isLoading, error, page, totalPages, setPage, refetch } = data;
+  const startIndex = allItems.length === 0 ? 0 : (page - 1) * 5 + 1;
+  const endIndex = Math.min(page * 5, allItems.length);
 
   return (
-    <>
+    <ListWrapper>
       <style>{`
         @keyframes shimmer {
-          0%   { background-position: 200% 0; }
+          0% { background-position: 200% 0; }
           100% { background-position: -200% 0; }
         }
       `}</style>
 
-      <ListWrapper>
-        <ListHeader>
+      <ListHeader>
+        <div>
+          <p className="eyebrow">복지 후보</p>
           <p className="result_count">
             {isLoading
-              ? '복지 서비스를 불러오는 중...'
+              ? '복지 정보를 불러오는 중입니다'
               : allItems.length > 0
-                ? <>총 <span>{allItems.length}건</span> 중 {(page - 1) * 5 + 1}~{Math.min(page * 5, allItems.length)}번째</>
-                : '검색 결과가 없습니다'
-            }
+                ? <>총 <span>{allItems.length}건</span> 중 {startIndex}-{endIndex}번째</>
+                : '조건에 맞는 결과가 없습니다'}
           </p>
-          {!isLoading && allItems.length > 0 && (
-            <p style={{ fontSize: '1.2rem', color: '#8A7F72', marginTop: '0.4rem' }}>
-              📌 선택 지역 복지 + 전국 공통 복지 포함
-            </p>
-          )}
-        </ListHeader>
-
-        {isLoading && (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '1.4rem' }}>
-            {[1, 2, 3].map((n) => <SkeletonCard key={n} />)}
-          </div>
+        </div>
+        {!isLoading && (
+          <button type="button" onClick={refetch}>
+            <RefreshCw size={15} />
+            새로고침
+          </button>
         )}
+      </ListHeader>
 
-        {!isLoading && error && (
-          <EmptyState>
-            <span className="empty_icon">⚠️</span>
-            <p className="empty_text">
-              {error}<br />
-              <button onClick={refetch} style={{
-                marginTop: '1.2rem', padding: '0.8rem 2rem',
-                background: '#2E9E7A', color: '#fff', border: 'none',
-                borderRadius: '8px', fontSize: '1.4rem', cursor: 'pointer',
-              }}>
-                다시 시도
-              </button>
-            </p>
-          </EmptyState>
-        )}
+      {isLoading && (
+        <div className="list-stack">
+          {[1, 2, 3].map((n) => <SkeletonCard key={n} />)}
+        </div>
+      )}
 
-        {!isLoading && !error && items.length === 0 && (
-          <EmptyState>
-            <span className="empty_icon">🔍</span>
-            <p className="empty_text">
-              해당하는 복지 서비스가 없습니다.<br />
-              필터나 위치를 변경해보세요.
-            </p>
-          </EmptyState>
-        )}
+      {!isLoading && error && (
+        <EmptyState>
+          <p className="empty_title">데이터를 불러오지 못했습니다</p>
+          <p className="empty_text">{error}</p>
+          <button onClick={refetch} type="button">다시 시도</button>
+        </EmptyState>
+      )}
 
-        {!isLoading && !error && items.map((item) => (
-          <WelfareCard key={item.id} welfare={item} isSaved={false} onSave={() => {}} />
-        ))}
+      {!isLoading && !error && items.length === 0 && (
+        <EmptyState>
+          <p className="empty_title">표시할 지원 후보가 없습니다</p>
+          <p className="empty_text">검색어, 위치, 맞춤 조건을 바꿔 다시 확인해보세요.</p>
+        </EmptyState>
+      )}
 
-        <Pagination page={page} totalPages={totalPages} setPage={setPage} />
-      </ListWrapper>
-    </>
+      {!isLoading && !error && items.length > 0 && (
+        <div className="list-stack">
+          {items.map((item) => (
+            <WelfareCard key={item.id} welfare={item} isSaved={false} onSave={() => {}} />
+          ))}
+        </div>
+      )}
+
+      <Pagination page={page} totalPages={totalPages} setPage={setPage} />
+    </ListWrapper>
   );
 }

@@ -1,120 +1,142 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { WelfareItem } from '@/types/welfare';
+import { isCacheableWelfareRequest, readWelfareCache, writeWelfareCache } from '@/lib/welfare/cache';
 
 const BASE_URL = 'http://apis.data.go.kr/B554287/LocalGovernmentWelfareInformations/LcgvWelfarelist';
 
-function decodeHtml(str: string): string {
-  return str
-    .replace(/&amp;/g, '&').replace(/&lt;/g, '<')
-    .replace(/&gt;/g, '>').replace(/&quot;/g, '"')
-    .replace(/&#39;/g, "'").replace(/&nbsp;/g, ' ');
+function decodeHtml(value: string): string {
+  return value
+    .replace(/&amp;/g, '&')
+    .replace(/&lt;/g, '<')
+    .replace(/&gt;/g, '>')
+    .replace(/&quot;/g, '"')
+    .replace(/&#39;/g, "'")
+    .replace(/&nbsp;/g, ' ');
 }
 
-function parseLocalXml(xml: string) {
-  const items: any[] = [];
+function parseLocalXml(xml: string): WelfareItem[] {
+  const items: WelfareItem[] = [];
   const matches = xml.match(/<servList>([\s\S]*?)<\/servList>/g) ?? [];
 
   matches.forEach((block) => {
     const get = (tag: string) => {
-      const m = block.match(new RegExp(`<${tag}>([\\s\\S]*?)<\\/${tag}>`));
-      return m ? decodeHtml(m[1].trim()) : '';
+      const match = block.match(new RegExp(`<${tag}>([\\s\\S]*?)<\\/${tag}>`));
+      return match ? decodeHtml(match[1].trim()) : '';
     };
 
     const id = get('servId');
     if (!id) return;
 
+    const ctpvNm = get('ctpvNm');
+    const sggNm = get('sggNm');
+
     items.push({
       id,
-      title:      get('servNm'),
-      category:   get('intrsThemaNmArray') || get('srvPvsnNm') || '기타',
-      target:     get('trgterIndvdlNmArray') || '전체',
-      period:     get('sprtCycNm') || '확인 필요',
-      ctpvNm:     get('ctpvNm'),
-      sggNm:      get('sggNm'),
-      region:     [get('ctpvNm'), get('sggNm')].filter(Boolean).join(' ') || '지자체',
-      summary:    get('servDgst'),
-      link:       get('servDtlLink'),
+      title: get('servNm'),
+      category: get('intrsThemaNmArray') || get('srvPvsnNm') || '기타',
+      target: get('trgterIndvdlNmArray') || '전체',
+      period: get('sprtCycNm') || '확인 필요',
+      ctpvNm,
+      sggNm,
+      region: [ctpvNm, sggNm].filter(Boolean).join(' ') || '지자체',
+      summary: get('servDgst'),
+      link: get('servDtlLink'),
       applyEndDd: get('aplyEndDd'),
       lastModYmd: get('lastModYmd'),
-      isAlways:   get('alwServYn') === 'Y',
+      isAlways: get('alwServYn') === 'Y',
     });
   });
 
   return items;
 }
 
+function uniqueById(items: WelfareItem[]) {
+  const seen = new Set<string>();
+  return items.filter((item) => {
+    if (!item.id || seen.has(item.id)) return false;
+    seen.add(item.id);
+    return true;
+  });
+}
+
 export async function GET(req: NextRequest) {
   const { searchParams } = req.nextUrl;
-
-  const serviceKey  = process.env.WELFARE_API_KEY!;
-  const sidoCd      = searchParams.get('sidoCd')      ?? '28';
-  const sidoName    = searchParams.get('sidoName')    ?? '';
+  const sidoCd = searchParams.get('sidoCd') ?? '28';
+  const sidoName = searchParams.get('sidoName') ?? '';
   const sigunguName = searchParams.get('sigunguName') ?? '';
+  const useCache = isCacheableWelfareRequest(searchParams);
 
-  // 공통 파라미터 (모든 페이지 호출에 사용)
+  if (useCache) {
+    const cachedItems = await readWelfareCache({ source: 'local', sidoName, sigunguName });
+    if (cachedItems) {
+      return NextResponse.json({ success: true, items: cachedItems, totalCount: cachedItems.length, cache: 'hit' });
+    }
+  }
+
+  const serviceKey = process.env.WELFARE_API_KEY;
+
+  if (!serviceKey) {
+    return NextResponse.json({ success: false, items: [] }, { status: 500 });
+  }
+
   const baseParams: Record<string, string> = {
     serviceKey,
-    callTp:    'L',
+    callTp: 'L',
     numOfRows: '100',
-    sidoCd,                          // ← sidoCd 항상 포함
+    sidoCd,
   };
 
-  if (searchParams.get('lifeArray'))   baseParams.lifeArray   = searchParams.get('lifeArray')!;
-  if (searchParams.get('srchKeyCode')) baseParams.srchKeyCode = searchParams.get('srchKeyCode')!;
+  const lifeArray = searchParams.get('lifeArray');
+  const srchKeyCode = searchParams.get('srchKeyCode');
+  if (lifeArray) baseParams.lifeArray = lifeArray;
+  if (srchKeyCode) baseParams.srchKeyCode = srchKeyCode;
 
   try {
-    // 1페이지 호출
-    const p1 = new URLSearchParams({ ...baseParams, pageNo: '1' });
-    const res1 = await fetch(`${BASE_URL}?${p1}`, { cache: 'no-store' });
-    const text1 = await res1.text();
-console.log('[local API raw response]', text1.slice(0, 500));
-    // totalCount 파싱
-    const totalMatch = text1.match(/<totalCount>(\d+)<\/totalCount>/);
-    const totalCount = totalMatch ? parseInt(totalMatch[1]) : 0;
+    const firstParams = new URLSearchParams({ ...baseParams, pageNo: '1' });
+    const firstResponse = await fetch(`${BASE_URL}?${firstParams.toString()}`, { cache: 'no-store' });
+    const firstText = await firstResponse.text();
+
+    const totalMatch = firstText.match(/<totalCount>(\d+)<\/totalCount>/);
+    const totalCount = totalMatch ? parseInt(totalMatch[1], 10) : 0;
     const totalPages = Math.ceil(totalCount / 100);
+    const allItems = parseLocalXml(firstText);
 
-    let allItems = parseLocalXml(text1);
-
-    // 2~3페이지 추가 호출 (최대 300건)
     if (totalPages > 1) {
       const extraCount = Math.min(totalPages - 1, 2);
       const extraTexts = await Promise.all(
-        Array.from({ length: extraCount }, (_, i) => {
-          const p = new URLSearchParams({ ...baseParams, pageNo: String(i + 2) });
-          return fetch(`${BASE_URL}?${p}`, { cache: 'no-store' }).then(r => r.text());
-        })
+        Array.from({ length: extraCount }, (_, index) => {
+          const params = new URLSearchParams({ ...baseParams, pageNo: String(index + 2) });
+          return fetch(`${BASE_URL}?${params.toString()}`, { cache: 'no-store' }).then((response) => response.text());
+        }),
       );
-      extraTexts.forEach(t => allItems.push(...parseLocalXml(t)));
+      extraTexts.forEach((text) => allItems.push(...parseLocalXml(text)));
     }
 
-    // ── 시도/시군구 텍스트 필터링 ──────────────────────────
-    const sidoShort = sidoName.slice(0, 2); // '인천', '서울' 등
-
+    const sidoShortName = sidoName.slice(0, 2);
     let filtered = allItems;
 
-    if (sidoShort) {
+    if (sidoShortName) {
       filtered = allItems.filter((item) => {
-        const itemSido    = (item.ctpvNm ?? '').trim();
-        const itemSigungu = (item.sggNm  ?? '').trim();
+        const itemSido = (item.ctpvNm ?? '').trim();
+        const itemSigungu = (item.sggNm ?? '').trim();
 
-        if (itemSido && !itemSido.includes(sidoShort)) return false;
+        if (itemSido && !itemSido.includes(sidoShortName)) return false;
 
-        if (sigunguName && sigunguName !== '전체' && itemSigungu) {
-          const sg = sigunguName.replace(/시$|구$|군$/, '').trim();
-          if (sg && !itemSigungu.includes(sg)) return false;
+        if (sigunguName && itemSigungu) {
+          const normalizedSigungu = sigunguName.replace(/시$|구$|군$/, '').trim();
+          if (normalizedSigungu && !itemSigungu.includes(normalizedSigungu)) return false;
         }
 
         return true;
       });
     }
 
-    // 중복 제거
-    const unique = filtered.filter(
-      (item, idx, arr) => arr.findIndex((i) => i.id === item.id) === idx
-    );
+    const unique = uniqueById(filtered);
+    if (useCache) await writeWelfareCache(unique, 'local');
 
-    return NextResponse.json({ success: true, items: unique, totalCount });
-  } catch (e) {
-    console.error('[local API error]', e);
+    return NextResponse.json({ success: true, items: unique, totalCount, cache: useCache ? 'miss' : 'bypass' });
+  } catch (error) {
+    console.error('[local API error]', error);
     return NextResponse.json({ success: false, items: [] }, { status: 500 });
   }
 }
