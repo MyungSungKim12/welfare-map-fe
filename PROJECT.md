@@ -551,6 +551,22 @@ Notion 기준으로 `WelfareList_DB` 설계가 존재합니다.
   - 외부 일시 장애로 판단, 다른 엔드포인트는 정상이므로 우리 코드 영향 없음
   - 필요 시 `WELFARE_VERIFY_ENDPOINT` env로 다른 경로 검증 가능
 
+### 2026.06.30 Notion 산출 문서 4종 최신화
+
+- 화면 설계서
+  - 현재 구현 기준인 `/` 단일 메인 화면, 섹션 앵커, Navbar/Hero/SavedSection/WelfareSection/Map/Statistics 구조 반영
+  - 아직 미구현인 로그인/마이페이지/상세/AI 프로필 화면은 후속 작업으로 분리
+- API 명세서
+  - 실제 Next API Route와 BE `/api/v1/popular/**` 명세 정리
+  - Supabase 캐시 응답 상태(`hit`, `miss`, `bypass`), 필수 env, 검증 스크립트 기준 반영
+- 트러블슈팅
+  - Supabase inactive, 기존 DB/migration 불일치, RLS 권한 과다, 캐시 env, 전국 API 500, Spring `.env.local`, Supabase pooler 이슈 기록
+- DB 설계 문서
+  - 실제 적용 스키마와 RLS/권한 정책 반영
+  - `welfare_services` 하이브리드 구조, `popular_services` generated score 공식, 저장/인기 집계 후속 작업 정리
+- 작업 히스토리
+  - Notion `작업 히스토리`에 `2026.06.30 (6차) Notion 산출 문서 4종 최신화` 섹션 추가
+
 ## 15. 운영 메모
 
 - 작업 히스토리와 의사결정은 기존처럼 Notion에 계속 업데이트합니다.
