@@ -36,6 +36,7 @@ function loadCacheModule() {
 const {
   fromWelfareCacheRow,
   isCacheableWelfareRequest,
+  isWelfareCacheConfigured,
   toWelfareCacheRow,
 } = loadCacheModule();
 
@@ -59,6 +60,15 @@ test('isCacheableWelfareRequest only allows unfiltered default welfare lookups',
   assert.equal(isCacheableWelfareRequest(new URLSearchParams()), true);
   assert.equal(isCacheableWelfareRequest(new URLSearchParams({ lifeArray: '003' })), false);
   assert.equal(isCacheableWelfareRequest(new URLSearchParams({ srchKeyCode: '004' })), false);
+});
+
+test('isWelfareCacheConfigured requires both Supabase server env values', () => {
+  assert.equal(isWelfareCacheConfigured({}), false);
+  assert.equal(isWelfareCacheConfigured({ SUPABASE_URL: 'https://example.supabase.co' }), false);
+  assert.equal(isWelfareCacheConfigured({
+    SUPABASE_URL: 'https://example.supabase.co',
+    SUPABASE_SERVICE_ROLE_KEY: 'service-role',
+  }), true);
 });
 
 test('toWelfareCacheRow stores source-qualified keys without changing service id', () => {

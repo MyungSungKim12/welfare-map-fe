@@ -9,7 +9,7 @@
 | 프로젝트명 | WelfareMap |
 | 서비스 방향 | 위치 기반 복지 정보 + 지역생활 정보 + AI 맞춤 추천 |
 | 시작 시점 | 2026.03 |
-| 현재 상태 | 1차 기능 구현 진행 중, 메인 UI 1차 리디자인 및 데이터 기반 섹션 연결 완료 |
+| 현재 상태 | 1차 기능 구현 진행 중, 메인 UI 리디자인 / 실제 데이터 섹션 / Supabase 캐시 DB 적용 완료 |
 | Frontend | `D:\ms\welfare-map-fe` |
 | Backend | `D:\ms\welfare-map-be` |
 | Notion 문서 | WelfareMap 프로젝트 페이지 |
@@ -62,7 +62,7 @@ WelfareMap은 사용자의 현재 위치, 생애주기, 상황, 관심사를 기
 - 위치 기반 복지 리스트 조회
 - 지도와 복지 리스트 데이터 공유
 - 실제 API 결과 기반 Hero 요약 / 알림 / 추천 후보 / 통계 섹션
-- Supabase 캐시 연동 코드와 DB migration 초안
+- Supabase 캐시 연동 코드와 DB migration 실제 적용
 - Kakao Local 키워드 검색 기반 주변 복지기관 마커 (복지관 / 주민센터 / 보건소 / 노인·장애인복지관 / 어린이집)
 
 ### 아직 더미 또는 미완성인 기능
@@ -70,7 +70,7 @@ WelfareMap은 사용자의 현재 위치, 생애주기, 상황, 관심사를 기
 - 인기 복지 섹션 실제 데이터 연동
 - 복지 저장 / 북마크 기능
 - 로그인 / 마이페이지
-- Supabase 캐시 migration 실제 DB 적용
+- Supabase 서버 환경변수 미설정 시 앱 캐시 우회 처리
 - 인기 복지 집계
 - 배치 작업
 - AI 맞춤 추천
@@ -144,7 +144,7 @@ welfare-map-be/
 | Kakao Coord2Region | 연동됨 | GPS 좌표를 행정구역으로 변환 |
 | Kakao Keyword Search | 연동됨 | 지역명 검색 후 좌표 조회 |
 | Kakao Local 시설 검색 | 연동됨 | 위치 반경 내 복지기관 / 주민센터 / 보건소 등 마커 후보 조회 |
-| Supabase 캐시 | 코드 준비됨 / DB 적용 대기 | 기본 복지 조회 결과 캐싱 |
+| Supabase 캐시 | DB 적용 및 RLS 검증 완료 / 앱 서버 env 주입 대기 | 기본 복지 조회 결과 캐싱 |
 | 지역 행사 / 문화 API | 미연동 | 1+5 확장 시 후보 |
 | 날씨 API | 미연동 | 오늘의 지역생활 추천 후보 |
 | 공공시설 / 복지기관 API | 미연동 | 지도 기반 주변 정보 후보 |
@@ -167,21 +167,31 @@ Notion 기준으로 `WelfareList_DB` 설계가 존재합니다.
 - `popular_services`
 - `batch_logs`
 
-현재 Supabase 프로젝트는 확인 시점에 `INACTIVE` 상태였고, MCP 테이블 조회는 DB 연결 timeout으로 검증하지 못했습니다.
+2026.06.30 기준 Supabase 프로젝트 `WelfareList_DB`는 재활성화되어 `ACTIVE_HEALTHY` 상태로 확인했습니다.
 
-2026.06.30 기준 `WelfareList_DB`는 여전히 `INACTIVE`이며 `select 1` 실행도 connection timeout으로 실패했습니다.
+기존 `welfare_services`, `popular_services`, `welfare_deadlines`, `welfare_new` 테이블이 이미 존재했기 때문에, migration은 기존 테이블을 삭제하지 않고 캐시용 컬럼, 인덱스, RLS 정책, 권한을 보강하는 방식으로 조정했습니다.
 
-로컬에는 다음 migration이 준비되어 있습니다.
+로컬에는 다음 migration이 준비되어 있으며, 실제 Supabase DB에 적용했습니다.
 
 - `supabase/migrations/20260630010402_welfare_cache.sql`
 
 포함 내용:
 
-- `welfare_services` 캐시 테이블
-- `popular_services` 집계 테이블
-- `welfare_deadlines`, `welfare_new` 보안 invoker view
+- 기존 `welfare_services` 테이블에 캐시용 컬럼과 unique index 추가
+- 기존 `popular_services` 집계 테이블 보강
+- `welfare_deadlines`, `welfare_new` 읽기 정책 보강
 - RLS 활성화
 - `anon`, `authenticated`, `service_role` 권한 명시
+
+검증 결과:
+
+- `welfare_services.cache_key`, `service_id`, `source`, `title`, `period`, `region`, `raw_data`, `fetched_at` 등 캐시 컬럼 존재 확인
+- `welfare_services`, `popular_services`, `welfare_deadlines`, `welfare_new` 공개 조회 RLS 정책 확인
+- `anon`/publishable key 기준 Data API `GET /rest/v1/welfare_services` 200 응답 확인
+- 사용자/로그/저장 계열 테이블은 RLS 활성화 및 `anon`/`authenticated` 권한 제거 확인
+- publishable key 기준 `GET /rest/v1/users` 401 응답 확인
+- 임시 캐시 row insert/select/delete 검증 및 테스트 row 삭제 확인
+- FE `.env.local`에는 아직 `SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY`가 없어 앱 런타임 캐시는 `bypass` 상태로 동작
 
 ## 10. 검토 결과
 
@@ -196,6 +206,8 @@ Notion 기준으로 `WelfareList_DB` 설계가 존재합니다.
 - Notion 프로젝트 문서 확인
 - FE/BE GitHub 원격 저장소 확인
 - Supabase 프로젝트 메타데이터 확인
+- Supabase migration 적용 및 Data API/RLS 검증
+- Supabase advisor 기준 과도한 public table 쓰기 권한 제거 확인
 - Kakao / Welfare API 프록시 구조 확인
 
 ### 개선 필요
@@ -203,6 +215,7 @@ Notion 기준으로 `WelfareList_DB` 설계가 존재합니다.
 - 인기 복지, 북마크, 로그인, 저장 기능은 아직 미완성
 - 필터가 적용된 복지 API 조회는 아직 외부 API를 직접 호출함
 - 노출된 Supabase DB 비밀번호는 코드에서 제거했지만, 실제 키 회전은 Supabase Dashboard에서 별도 수행 필요
+- FE 로컬/배포 환경에 `SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY`를 넣어야 앱 캐시가 실제로 활성화됨
 - `npm audit` 잔여 2건은 Next.js 내부 postcss 전이 의존성으로, `--force` 적용 시 Next 9.x 다운그레이드가 발생해 안전 패치 한계
 
 ### 2026.06.30 해결됨
@@ -212,6 +225,8 @@ Notion 기준으로 `WelfareList_DB` 설계가 존재합니다.
 - BE Gradle wrapper jar 복구 및 `gradlew.bat test` 성공 확인
 - FE `npm audit` 취약점 6건 → 2건 (중간, 전이의존성)으로 축소 (Next.js `^16.2.9` 패치업)
 - FE 지도 마커 실제 기관 좌표 연동 (Kakao Local 키워드 검색)
+- Supabase `WelfareList_DB` 재활성화 확인 및 캐시 migration 실제 적용
+- FE 캐시 env 미설정 시 `cache: "bypass"` 응답으로 명확히 우회하도록 수정
 
 ## 11. 추천 아키텍처 방향
 
@@ -284,12 +299,13 @@ Notion 기준으로 `WelfareList_DB` 설계가 존재합니다.
 
 ### 1순위: 보안과 레포 정리
 
-**상태: 2026.06.30 코드 정리 완료, 외부 키 회전 대기**
+**상태: 2026.06.30 코드 정리 및 검증 완료, 외부 키 회전 대기**
 
 - BE DB 비밀번호 키 회전
 - `application.yml` 환경변수화 완료
 - Git에서 빌드 산출물 제거 처리 완료
 - Gradle wrapper 복구 완료
+- BE `.env.local` Git ignore 보강 및 `.env.example` 추가
 - FE/BE Git 상태 정리
 
 ### 2순위: FE 데이터 흐름 정리
@@ -303,13 +319,14 @@ Notion 기준으로 `WelfareList_DB` 설계가 존재합니다.
 
 ### 3순위: Supabase 캐시 구조 연결
 
-**상태: 2026.06.30 코드 및 migration 준비 완료, DB 비활성화로 적용 대기**
+**상태: 2026.06.30 DB migration 적용 및 RLS/Data API 검증 완료, 앱 서버 env 주입 대기**
 
-- Supabase 프로젝트 재활성화 필요
-- 실제 테이블 존재 여부 확인은 connection timeout으로 미완료
+- Supabase 프로젝트 `WelfareList_DB` 재활성화 확인
+- 기존 테이블 구조에 맞춰 migration 조정 및 실제 적용 완료
 - 복지 API 응답을 `welfare_services`에 캐싱하는 코드 작성 완료
 - 기본 조회는 캐시 우선, 필터 조회는 정확도 유지를 위해 외부 API 우선
 - 인기/마감/신규 집계 테이블 및 view migration 작성 완료
+- FE 서버 환경변수 `SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY` 주입 후 앱 캐시 활성화 필요
 
 ### 4순위: 지역생활 데이터 추가
 
@@ -327,6 +344,23 @@ Notion 기준으로 `WelfareList_DB` 설계가 존재합니다.
 - AI 추천 이유 생성
 - 신청 체크리스트 생성
 - 오늘의 지역생활 추천 생성
+
+### 최신 다음 작업 우선순위
+
+**기준: 2026.06.30 우선순위 1, 2 완료 후**
+
+1. Supabase 앱 캐시 활성화
+   - FE 로컬/배포 환경에 `SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY` 등록
+   - 기본 복지 조회에서 cache miss → write → hit 흐름 검증
+   - service role key가 브라우저 번들에 노출되지 않는지 재확인
+2. 저장/북마크 MVP
+   - 로그인 전 localStorage 임시 저장 UX 설계
+   - 로그인 후 `saved_services` RLS 정책과 API 설계
+   - 저장한 복지 목록 UI 초안 작성
+3. AI 추천 레이어 1차
+   - 사용자 프로필 입력값 정의
+   - 규칙 기반 적합도 점수 계산
+   - 추천 이유/신청 체크리스트 생성 API 설계
 
 ## 14. 작업 히스토리 요약
 
@@ -414,6 +448,34 @@ Notion 기준으로 `WelfareList_DB` 설계가 존재합니다.
   - 지도 좌상단에 "주변 복지기관 N곳" 배지 추가
   - Node 기본 테스트 6개 추가 (`scripts/test-facilities.mjs`)
   - 검증: `npm run lint`, `npm run build`, `node --test` 13/13 통과
+
+### 2026.06.30 우선순위 1, 2 추가 진행
+
+- BE 보안/레포 정리 보강
+  - `.gitignore`의 `.env.local` 예외를 제거하고 `.env.*` ignore 정책 정리
+  - `.env.example` 추가로 로컬 필수 환경변수 템플릿 제공
+  - `gradlew.bat test` 재검증
+- Supabase 재활성화 및 migration 적용
+  - `WelfareList_DB` 상태를 `ACTIVE_HEALTHY`로 확인
+  - 기존 DB 테이블을 보존하는 방식으로 `20260630010402_welfare_cache.sql` 조정
+  - `welfare_services` 캐시 컬럼/unique index/RLS 정책/권한 적용
+  - `popular_services`, `welfare_deadlines`, `welfare_new` 읽기 정책 적용
+  - 기존 사용자/로그/저장 계열 테이블의 RLS 활성화 및 public 권한 제거
+  - public 함수 `search_path` 고정 및 중복 index 제거
+  - 임시 캐시 row insert/select/delete로 row shape 검증
+  - publishable key 기준 Data API 조회 200 응답 확인
+  - publishable key 기준 비공개 `users` 조회 401 응답 확인
+  - Supabase advisor 재확인: `RLS Disabled in Public` 경고 제거
+- FE 캐시 안전장치 추가
+  - `SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY`가 모두 있을 때만 캐시 사용
+  - 서버 env가 없으면 기본 복지 API 응답에 `cache: "bypass"` 반환
+  - Node 기본 테스트에 캐시 env 판별 케이스 추가
+- 검증
+  - `node --test .\scripts\test-welfare-cache.mjs .\scripts\test-welfare-insights.mjs .\scripts\test-facilities.mjs` 14/14 통과
+  - `npm run lint` 통과
+  - `npm run build` 통과
+  - BE `.\gradlew.bat test` 통과
+  - 로컬 API `GET /api/welfare/national?numOfRows=1` 200, `cache: "bypass"` 확인
 
 ## 15. 운영 메모
 

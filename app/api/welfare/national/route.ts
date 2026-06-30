@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { WelfareItem } from '@/types/welfare';
-import { isCacheableWelfareRequest, readWelfareCache, writeWelfareCache } from '@/lib/welfare/cache';
+import { isCacheableWelfareRequest, isWelfareCacheConfigured, readWelfareCache, writeWelfareCache } from '@/lib/welfare/cache';
 
 const BASE_URL = 'http://apis.data.go.kr/B554287/NationalWelfareInformations/NationalWelfarelist';
 
@@ -51,7 +51,7 @@ function parseNationalXml(xml: string): WelfareItem[] {
 
 export async function GET(req: NextRequest) {
   const { searchParams } = req.nextUrl;
-  const useCache = isCacheableWelfareRequest(searchParams);
+  const useCache = isCacheableWelfareRequest(searchParams) && isWelfareCacheConfigured();
 
   if (useCache) {
     const cachedItems = await readWelfareCache({ source: 'national' });

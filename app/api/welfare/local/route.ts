@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { WelfareItem } from '@/types/welfare';
-import { isCacheableWelfareRequest, readWelfareCache, writeWelfareCache } from '@/lib/welfare/cache';
+import { isCacheableWelfareRequest, isWelfareCacheConfigured, readWelfareCache, writeWelfareCache } from '@/lib/welfare/cache';
 
 const BASE_URL = 'http://apis.data.go.kr/B554287/LocalGovernmentWelfareInformations/LcgvWelfarelist';
 
@@ -64,7 +64,7 @@ export async function GET(req: NextRequest) {
   const sidoCd = searchParams.get('sidoCd') ?? '28';
   const sidoName = searchParams.get('sidoName') ?? '';
   const sigunguName = searchParams.get('sigunguName') ?? '';
-  const useCache = isCacheableWelfareRequest(searchParams);
+  const useCache = isCacheableWelfareRequest(searchParams) && isWelfareCacheConfigured();
 
   if (useCache) {
     const cachedItems = await readWelfareCache({ source: 'local', sidoName, sigunguName });

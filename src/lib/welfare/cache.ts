@@ -7,6 +7,13 @@ export interface WelfareCacheRow {
   cache_key: string;
   service_id: string;
   source: WelfareCacheSource;
+  serv_id?: string;
+  serv_nm?: string;
+  serv_dgst?: string;
+  sido_nm?: string | null;
+  sigungu_nm?: string | null;
+  region_type?: string;
+  detail_link?: string;
   title: string;
   category: string;
   target: string;
@@ -20,6 +27,8 @@ export interface WelfareCacheRow {
   last_mod_ymd: string | null;
   is_always: boolean;
   raw_data: Record<string, unknown>;
+  cached_at?: string;
+  expires_at?: string;
   fetched_at?: string;
   updated_at?: string;
 }
@@ -36,11 +45,22 @@ export function isCacheableWelfareRequest(searchParams: URLSearchParams) {
   return !searchParams.get('lifeArray') && !searchParams.get('srchKeyCode');
 }
 
+export function isWelfareCacheConfigured(env: NodeJS.ProcessEnv = process.env) {
+  return Boolean(env.SUPABASE_URL && env.SUPABASE_SERVICE_ROLE_KEY);
+}
+
 export function toWelfareCacheRow(item: WelfareItem, source: WelfareCacheSource): WelfareCacheRow {
   return {
     cache_key: `${source}:${item.id}`,
     service_id: item.id,
     source,
+    serv_id: item.id,
+    serv_nm: item.title,
+    serv_dgst: item.summary,
+    sido_nm: item.ctpvNm ?? null,
+    sigungu_nm: item.sggNm ?? null,
+    region_type: source,
+    detail_link: item.link,
     title: item.title,
     category: item.category,
     target: item.target,
