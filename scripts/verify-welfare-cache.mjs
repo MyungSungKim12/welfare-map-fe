@@ -5,12 +5,16 @@
 //   2) 본 스크립트 실행: node scripts/verify-welfare-cache.mjs
 //
 // 동작:
-//   - /api/welfare/national 을 두 번 호출
+//   - 기본 엔드포인트(/api/welfare/local) 를 두 번 호출
 //   - SUPABASE_URL / SUPABASE_SERVICE_ROLE_KEY 미설정: 두 번 모두 cache:"bypass"
-//   - env 설정 후 (테이블이 비어있다면): 첫 호출 cache:"miss", 두 번째 cache:"hit"
+//   - env 설정 후 (캐시가 차있지 않다면): 첫 호출 cache:"miss", 두 번째 cache:"hit"
+//
+// 다른 엔드포인트로 검증하려면:
+//   WELFARE_VERIFY_ENDPOINT='/api/welfare/national?numOfRows=5' node scripts/verify-welfare-cache.mjs
 
 const BASE = process.env.WELFARE_VERIFY_BASE_URL ?? 'http://localhost:3000';
-const ENDPOINT = '/api/welfare/national?numOfRows=5';
+const ENDPOINT = process.env.WELFARE_VERIFY_ENDPOINT
+  ?? '/api/welfare/local?numOfRows=5&sidoCd=28&sidoName=%EC%9D%B8%EC%B2%9C%EA%B4%91%EC%97%AD%EC%8B%9C&sigunguName=';
 
 async function hit(label) {
   const url = `${BASE}${ENDPOINT}`;

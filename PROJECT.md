@@ -349,10 +349,11 @@ Notion 기준으로 `WelfareList_DB` 설계가 존재합니다.
 
 **기준: 2026.06.30 우선순위 1, 2 완료 후**
 
-1. Supabase 앱 캐시 활성화 — **2026.06.30 코드/스크립트 준비 완료, env 주입 대기**
+1. Supabase 앱 캐시 활성화 — **2026.06.30 env 주입 및 E2E 검증 완료**
    - `.env.example`에 Supabase 키 가이드 보강
    - `scripts/verify-welfare-cache.mjs` E2E 검증 스크립트 추가
-   - FE 로컬/배포 환경에 `SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY` 등록은 외부 작업 대기
+   - FE `.env.local`에 `SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY`, `KAKAO_REST_API_KEY` 주입 완료
+   - dev 서버에서 cache miss → Supabase upsert → cache hit 사이클 정상 동작 확인
 2. 저장/북마크 MVP — **2026.06.30 localStorage MVP 완료**
    - `useBookmarks` 훅, `SavedSection` 컴포넌트, Navbar 카운트 배지 연결
    - WelfareList → WelfareCard로 `isSaved`/`onSave` 인터페이스 연결
@@ -494,6 +495,21 @@ Notion 기준으로 `WelfareList_DB` 설계가 존재합니다.
   - `npm run lint` 통과
   - `npm run build` 통과 (10/10 페이지)
   - Node 기본 테스트 14/14 통과
+
+### 2026.06.30 우선순위 A.1 E2E 검증
+
+- FE `.env.local`에 `SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY`, `KAKAO_REST_API_KEY` 주입
+  - `KAKAO_REST_API_KEY`는 BE `.env.local`의 `KAKAO_CLIENT_ID` 값 재사용 (Kakao OAuth client_id = REST API 키)
+  - `SUPABASE_URL`은 BE `DB_URL`의 project-ref에서 도출
+  - `SUPABASE_SERVICE_ROLE_KEY`는 Supabase Dashboard에서 별도 발급
+- dev 서버 env 자동 reload 확인 (`.next/dev/logs/next-development.log`에 `Reload env: .env.local`)
+- `node scripts/verify-welfare-cache.mjs` 검증
+  - `/api/welfare/local` 1차 호출: cache=miss, items=5 (외부 → Supabase upsert)
+  - 동일 호출 2차: cache=hit, items=5 (Supabase에서 직접 응답)
+- `scripts/verify-welfare-cache.mjs` 기본 엔드포인트를 `/api/welfare/national` → `/api/welfare/local`로 변경
+  - 검증 시점 data.go.kr `NationalWelfareInformations/NationalWelfarelist`가 500 응답
+  - 외부 일시 장애로 판단, 다른 엔드포인트는 정상이므로 우리 코드 영향 없음
+  - 필요 시 `WELFARE_VERIFY_ENDPOINT` env로 다른 경로 검증 가능
 
 ## 15. 운영 메모
 
