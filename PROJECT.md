@@ -133,7 +133,25 @@ welfare-map-be/
   build.gradle.kts
 ```
 
-현재 BE는 초기 세팅 상태이며, 실제 도메인 API와 배치 로직은 아직 구현 전입니다.
+2026.06.30 기준 popular 도메인이 추가되었습니다. 인증/사용자/배치 도메인은 여전히 미구현 상태입니다.
+
+```text
+welfare-map-be/
+  src/main/java/com/welfareMap/
+    DemoApplication.java
+    config/
+      SecurityConfig.java     # /api/v1/popular/** permit, CSRF off, stateless
+      CorsConfig.java         # app.cors-allowed-origins 기반 CORS
+    popular/
+      domain/PopularServiceStats.java         # popular_services 매핑
+      repository/PopularServiceStatsRepository.java   # native ON CONFLICT upsert
+      service/PopularServiceFacade.java
+      controller/PopularServiceController.java
+      dto/{PopularServiceDto,InteractionType}.java
+  src/main/resources/application.yml
+  build.gradle.kts
+  gradle.properties           # IPv4 stack + heap 크기
+```
 
 ## 8. 외부 API 연동 현황
 
@@ -495,6 +513,28 @@ Notion 기준으로 `WelfareList_DB` 설계가 존재합니다.
   - `npm run lint` 통과
   - `npm run build` 통과 (10/10 페이지)
   - Node 기본 테스트 14/14 통과
+
+### 2026.06.30 BE 하이브리드 — 인기 복지 집계 도메인 추가
+
+방향: 주기적/누적 데이터(인기 복지 집계)는 BE로, 단발 호출(AI 추천)은 FE에서 시작하는 하이브리드 전략. 이번 작업은 BE 첫 도메인.
+
+- `config/SecurityConfig`, `config/CorsConfig`
+  - `/api/v1/popular/**` permitAll
+  - CSRF disable, stateless 세션, formLogin disable
+  - CORS는 `app.cors-allowed-origins` (기본 `http://localhost:3000`)
+- `popular` 도메인
+  - `PopularServiceStats` 엔티티: `popular_services` 테이블 매핑, `score`/`updated_at`은 DB 생성 컬럼이라 insert/update 불가 표시
+  - `PopularServiceStatsRepository`: native `ON CONFLICT DO UPDATE` 업서트로 동시성 안전한 카운터 증분, `findTopByScore(limit)` Top N 조회
+  - `PopularServiceFacade`: `@Transactional` 경계, FK 위반 시 404 변환
+  - `PopularServiceController`
+    - `GET /api/v1/popular/top?limit=10` (1~50)
+    - `GET /api/v1/popular/{cacheKey}` 단건 조회
+    - `POST /api/v1/popular/{cacheKey}/{view|click|save}` 카운터 1 증분
+- `application.yml`: `${SPRING_DATASOURCE_URL:${DB_URL}}` 폴백 추가 — 기존 `.env.local`의 `DB_*` 호환 유지
+- `gradle.properties` 추가: `-Djava.net.preferIPv4Stack=true -Xmx1g`
+- 검증
+  - `gradlew.bat --version` 정상 (Gradle 8.14.4, JDK 21)
+  - `gradlew.bat compileJava`는 도구 샌드박스 JDK loopback 제약으로 실행 못 함 — 로컬에서 `gradlew.bat build` / `gradlew.bat test` 검증 필요
 
 ### 2026.06.30 우선순위 A.1 E2E 검증
 
