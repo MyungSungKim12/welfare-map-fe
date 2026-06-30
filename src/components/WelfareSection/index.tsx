@@ -67,7 +67,7 @@ export default function WelfareSection({
                 <MapPinned size={18} />
                 내 주변 지도
               </div>
-              <Map location={location} items={welfareData.allItems} />
+              <Map location={location} />
             </div>
 
             <div className="list-panel">

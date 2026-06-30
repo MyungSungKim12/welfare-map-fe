@@ -154,8 +154,20 @@ export const MarkerInfoBox = styled.div`
     cursor: pointer;
   }
 
+  .info_phone {
+    margin-top: 0.5rem;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    color: var(--color-muted);
+    font-size: 1.3rem;
+    font-weight: 700;
+  }
+
   a {
     display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
     margin-top: 1rem;
     color: var(--color-teal-dark);
     font-size: 1.35rem;
@@ -163,4 +175,19 @@ export const MarkerInfoBox = styled.div`
     text-decoration: underline;
     text-underline-offset: 3px;
   }
+`;
+
+export const FacilityBadge = styled.div`
+  position: absolute;
+  top: 1.2rem;
+  left: 1.2rem;
+  z-index: 10;
+  padding: 0.55rem 1rem;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.94);
+  border: 1px solid var(--color-line);
+  color: var(--color-navy);
+  font-size: 1.25rem;
+  font-weight: 800;
+  box-shadow: var(--shadow-sm);
 `;

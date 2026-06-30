@@ -63,11 +63,11 @@ WelfareMap은 사용자의 현재 위치, 생애주기, 상황, 관심사를 기
 - 지도와 복지 리스트 데이터 공유
 - 실제 API 결과 기반 Hero 요약 / 알림 / 추천 후보 / 통계 섹션
 - Supabase 캐시 연동 코드와 DB migration 초안
+- Kakao Local 키워드 검색 기반 주변 복지기관 마커 (복지관 / 주민센터 / 보건소 / 노인·장애인복지관 / 어린이집)
 
 ### 아직 더미 또는 미완성인 기능
 
 - 인기 복지 섹션 실제 데이터 연동
-- 지도 마커 실제 기관 좌표 연동
 - 복지 저장 / 북마크 기능
 - 로그인 / 마이페이지
 - Supabase 캐시 migration 실제 DB 적용
@@ -143,6 +143,7 @@ welfare-map-be/
 | 복지로 전국 복지 API | 연동됨 | 전국 공통 복지 목록 조회 |
 | Kakao Coord2Region | 연동됨 | GPS 좌표를 행정구역으로 변환 |
 | Kakao Keyword Search | 연동됨 | 지역명 검색 후 좌표 조회 |
+| Kakao Local 시설 검색 | 연동됨 | 위치 반경 내 복지기관 / 주민센터 / 보건소 등 마커 후보 조회 |
 | Supabase 캐시 | 코드 준비됨 / DB 적용 대기 | 기본 복지 조회 결과 캐싱 |
 | 지역 행사 / 문화 API | 미연동 | 1+5 확장 시 후보 |
 | 날씨 API | 미연동 | 오늘의 지역생활 추천 후보 |
@@ -201,15 +202,16 @@ Notion 기준으로 `WelfareList_DB` 설계가 존재합니다.
 
 - 인기 복지, 북마크, 로그인, 저장 기능은 아직 미완성
 - 필터가 적용된 복지 API 조회는 아직 외부 API를 직접 호출함
-- 지도 마커는 현재 복지 후보 데이터를 지도 중심 주변에 시각화하며, 실제 기관 좌표 연동은 미완성
 - 노출된 Supabase DB 비밀번호는 코드에서 제거했지만, 실제 키 회전은 Supabase Dashboard에서 별도 수행 필요
-- `npm install @supabase/supabase-js` 후 `npm audit` 기준 취약점 6건 확인됨. 강제 수정 전 영향 범위 검토 필요
+- `npm audit` 잔여 2건은 Next.js 내부 postcss 전이 의존성으로, `--force` 적용 시 Next 9.x 다운그레이드가 발생해 안전 패치 한계
 
 ### 2026.06.30 해결됨
 
 - BE `application.yml` 평문 DB 접속 정보 제거
 - BE `build/`, `.gradle/`, `.idea` Git 인덱스 제거
 - BE Gradle wrapper jar 복구 및 `gradlew.bat test` 성공 확인
+- FE `npm audit` 취약점 6건 → 2건 (중간, 전이의존성)으로 축소 (Next.js `^16.2.9` 패치업)
+- FE 지도 마커 실제 기관 좌표 연동 (Kakao Local 키워드 검색)
 
 ## 11. 추천 아키텍처 방향
 
@@ -311,10 +313,12 @@ Notion 기준으로 `WelfareList_DB` 설계가 존재합니다.
 
 ### 4순위: 지역생활 데이터 추가
 
-- 지역 행사 API
-- 공공시설 / 복지기관 API
-- 날씨 API
-- 지도 기반 주변 정보
+**상태: 2026.06.30 일부 진행 — 복지기관 마커 완료**
+
+- 공공시설 / 복지기관 API: Kakao Local 키워드 검색 기반 1차 연동 완료
+- 지역 행사 API: 미연동
+- 날씨 API: 미연동
+- 지도 기반 주변 정보 확장: 거리 정렬 / 카테고리 필터 / Supabase 캐싱 후보
 
 ### 5순위: AI 추천 레이어 추가
 
@@ -394,6 +398,22 @@ Notion 기준으로 `WelfareList_DB` 설계가 존재합니다.
   - Supabase migration 생성 및 RLS/권한/view 포함
   - Node 기본 테스트 3개 추가
   - Supabase 실제 SQL 실행은 `WelfareList_DB` 비활성화로 timeout 발생
+
+### 2026.06.30 후속 작업
+
+- FE 보안 패치
+  - Next.js `16.2.1` → `^16.2.9` 패치업, ESLint config 동반 갱신
+  - `npm audit fix` 비파괴 적용으로 brace-expansion / js-yaml / @babel/core 해결
+  - 잔여 2건은 Next 내부 postcss 전이의존성으로 `--force` 시 9.x 다운그레이드가 발생해 보류
+- FE 4순위 일부 착수: 지도 마커 실좌표 연동
+  - 신규 엔드포인트 `app/api/kakao/facilities/route.ts` 추가 (Kakao Local 키워드 검색 병렬 호출, 거리 정렬, 중복 제거)
+  - `Facility` 타입 추가 및 `src/utils/facilities.ts` 순수 유틸 분리
+  - `useNearbyFacilities` 훅 추가, React 19 `set-state-in-effect` 규칙 준수
+  - `Map` 컴포넌트의 더미 원형 마커 배치 제거, 실제 좌표 기반 복지기관 마커로 교체
+  - 마커 클릭 시 시설 이름 / 주소 / 전화 / 거리 / 카카오맵 링크 표시
+  - 지도 좌상단에 "주변 복지기관 N곳" 배지 추가
+  - Node 기본 테스트 6개 추가 (`scripts/test-facilities.mjs`)
+  - 검증: `npm run lint`, `npm run build`, `node --test` 13/13 통과
 
 ## 15. 운영 메모
 

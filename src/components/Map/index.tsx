@@ -1,9 +1,10 @@
 'use client';
 
 import { useEffect, useRef, useState, useCallback } from 'react';
-import { LocateFixed, X, ZoomIn, ZoomOut } from 'lucide-react';
-import { WelfareItem } from '@/types/welfare';
+import { LocateFixed, X, ZoomIn, ZoomOut, Phone, ExternalLink } from 'lucide-react';
+import type { Facility } from '@/types/welfare';
 import { LocationInfo } from '@/hooks/useLocation';
+import { useNearbyFacilities } from '@/hooks/useNearbyFacilities';
 import {
   MapWrapper,
   MapContainer,
@@ -12,11 +13,11 @@ import {
   MyLocationBtn,
   LoadingOverlay,
   MarkerInfoBox,
+  FacilityBadge,
 } from './Map.style';
 
 interface Props {
   location?: LocationInfo;
-  items?: WelfareItem[];
 }
 
 interface KakaoLatLng {
@@ -52,19 +53,17 @@ interface KakaoSdk {
 declare global {
   interface Window {
     kakao?: KakaoSdk;
-    __mapMarkerClick?: (id: string) => void;
+    __mapFacilityClick?: (id: string) => void;
   }
 }
 
 const CATEGORY_COLOR: Record<string, string> = {
-  의료: '#0f6b57',
-  건강: '#0f6b57',
-  주거: '#173344',
-  생활: '#173344',
-  취업: '#b86b17',
-  교육: '#3657a6',
-  보육: '#3657a6',
-  돌봄: '#7c4d8b',
+  복지관: '#14866d',
+  노인복지관: '#7c4d8b',
+  장애인복지관: '#3657a6',
+  주민센터: '#173344',
+  보건소: '#b86b17',
+  어린이집: '#0f6b57',
 };
 
 function escapeHtml(value: string) {
@@ -76,12 +75,18 @@ function escapeHtml(value: string) {
     .replace(/'/g, '&#39;');
 }
 
-function getCategoryColor(category: string) {
+function getFacilityColor(category: string) {
   const found = Object.entries(CATEGORY_COLOR).find(([key]) => category.includes(key));
   return found?.[1] ?? '#14866d';
 }
 
-export default function Map({ location, items = [] }: Props) {
+function formatDistance(meters: number) {
+  if (!meters) return '';
+  if (meters < 1000) return `${meters}m`;
+  return `${(meters / 1000).toFixed(1)}km`;
+}
+
+export default function Map({ location }: Props) {
   const mapContainerRef = useRef<HTMLDivElement>(null);
   const mapRef = useRef<KakaoMapInstance | null>(null);
   const overlaysRef = useRef<KakaoOverlay[]>([]);
@@ -90,36 +95,30 @@ export default function Map({ location, items = [] }: Props) {
   const [mapError, setMapError] = useState<string | null>(() =>
     process.env.NEXT_PUBLIC_KAKAO_MAP_KEY ? null : '카카오맵 API 키가 설정되지 않았습니다.'
   );
-  const [selectedItem, setSelectedItem] = useState<WelfareItem | null>(null);
+  const [selectedFacility, setSelectedFacility] = useState<Facility | null>(null);
 
-  const drawMarkers = useCallback((map: KakaoMapInstance, welfareItems: WelfareItem[]) => {
+  const { facilities, isLoading: isFacilitiesLoading } = useNearbyFacilities(location?.lat, location?.lng);
+
+  const drawMarkers = useCallback((map: KakaoMapInstance, items: Facility[]) => {
     overlaysRef.current.forEach((overlay) => overlay.setMap(null));
     overlaysRef.current = [];
 
     const kakao = window.kakao;
-    if (!kakao || welfareItems.length === 0) return;
+    if (!kakao || items.length === 0) return;
 
-    const center = map.getCenter();
-    const baseLat = center.getLat();
-    const baseLng = center.getLng();
-    const visibleItems = welfareItems.slice(0, 30);
+    const visibleItems = items.slice(0, 40);
 
-    visibleItems.forEach((item, index) => {
-      const angle = (index / Math.max(visibleItems.length, 1)) * 2 * Math.PI;
-      const radius = 0.004 + (index % 5) * 0.0024;
-      const lat = baseLat + Math.sin(angle) * radius;
-      const lng = baseLng + Math.cos(angle) * radius;
-      const category = item.category.split(',')[0].trim() || '복지';
-      const color = getCategoryColor(category);
+    visibleItems.forEach((item) => {
+      const color = getFacilityColor(item.category);
       const safeId = escapeHtml(item.id);
-      const safeCategory = escapeHtml(category);
+      const safeCategory = escapeHtml(item.category);
 
       const overlay = new kakao.maps.CustomOverlay({
         map,
-        position: new kakao.maps.LatLng(lat, lng),
+        position: new kakao.maps.LatLng(item.lat, item.lng),
         yAnchor: 1.4,
         content: `
-          <button onclick="window.__mapMarkerClick && window.__mapMarkerClick('${safeId}')" style="
+          <button onclick="window.__mapFacilityClick && window.__mapFacilityClick('${safeId}')" style="
             appearance:none;border:0;background:${color};color:#fff;
             padding:7px 11px;border-radius:999px;font-size:12px;font-weight:800;
             box-shadow:0 8px 18px rgba(16,32,39,0.22);white-space:nowrap;cursor:pointer;
@@ -142,21 +141,23 @@ export default function Map({ location, items = [] }: Props) {
     });
 
     mapRef.current = map;
-    window.__mapMarkerClick = (id: string) => {
-      const found = items.find((item) => item.id === id);
-      if (found) setSelectedItem(found);
-    };
     setIsLoaded(true);
-  }, [location?.lat, location?.lng, items]);
+  }, [location?.lat, location?.lng]);
+
+  useEffect(() => {
+    window.__mapFacilityClick = (id: string) => {
+      const found = facilities.find((item) => item.id === id);
+      if (found) setSelectedFacility(found);
+    };
+    return () => {
+      window.__mapFacilityClick = undefined;
+    };
+  }, [facilities]);
 
   useEffect(() => {
     if (!mapRef.current || !isLoaded) return;
-    window.__mapMarkerClick = (id: string) => {
-      const found = items.find((item) => item.id === id);
-      if (found) setSelectedItem(found);
-    };
-    drawMarkers(mapRef.current, items);
-  }, [items, isLoaded, drawMarkers]);
+    drawMarkers(mapRef.current, facilities);
+  }, [facilities, isLoaded, drawMarkers]);
 
   useEffect(() => {
     if (!mapRef.current || !window.kakao || !location?.lat || !location?.lng) return;
@@ -227,6 +228,14 @@ export default function Map({ location, items = [] }: Props) {
       )}
 
       {isLoaded && (
+        <FacilityBadge>
+          {isFacilitiesLoading
+            ? '주변 복지기관 검색 중...'
+            : `주변 복지기관 ${facilities.length}곳`}
+        </FacilityBadge>
+      )}
+
+      {isLoaded && (
         <MapControls>
           <MapControlBtn type="button" onClick={zoomIn} title="확대"><ZoomIn size={18} /></MapControlBtn>
           <MapControlBtn type="button" onClick={zoomOut} title="축소"><ZoomOut size={18} /></MapControlBtn>
@@ -240,17 +249,25 @@ export default function Map({ location, items = [] }: Props) {
         </MyLocationBtn>
       )}
 
-      {selectedItem && (
+      {selectedFacility && (
         <MarkerInfoBox>
-          <button className="info_close" onClick={() => setSelectedItem(null)} type="button" title="닫기">
+          <button className="info_close" onClick={() => setSelectedFacility(null)} type="button" title="닫기">
             <X size={17} />
           </button>
-          <p className="info_category">{selectedItem.category}</p>
-          <p className="info_name">{selectedItem.title}</p>
-          <p className="info_address">{selectedItem.region}</p>
-          {selectedItem.link && (
-            <a href={selectedItem.link} target="_blank" rel="noopener noreferrer">
-              상세 페이지 열기
+          <p className="info_category">
+            {selectedFacility.category}
+            {selectedFacility.distance > 0 && <span> · {formatDistance(selectedFacility.distance)}</span>}
+          </p>
+          <p className="info_name">{selectedFacility.name}</p>
+          {selectedFacility.address && <p className="info_address">{selectedFacility.address}</p>}
+          {selectedFacility.phone && (
+            <p className="info_phone">
+              <Phone size={14} /> {selectedFacility.phone}
+            </p>
+          )}
+          {selectedFacility.placeUrl && (
+            <a href={selectedFacility.placeUrl} target="_blank" rel="noopener noreferrer">
+              <ExternalLink size={14} /> 카카오맵에서 보기
             </a>
           )}
         </MarkerInfoBox>

@@ -40,3 +40,16 @@ export interface WelfareMarker {
   category: string;
   address:  string;
 }
+
+export interface Facility {
+  id:          string;
+  name:        string;
+  category:    string;       // 표준화된 분류 라벨 (복지관 / 주민센터 / 보건소 등)
+  rawCategory: string;       // Kakao 원본 category_name
+  lat:         number;
+  lng:         number;
+  address:     string;       // 도로명 우선, 없으면 지번
+  phone:       string;
+  placeUrl:    string;
+  distance:    number;       // 미터, 없으면 0
+}
