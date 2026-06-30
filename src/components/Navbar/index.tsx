@@ -19,7 +19,7 @@ export default function Navbar({ location, isLocating, detectLocation, savedCoun
       <Logo aria-label="WelfareMap 홈">
         <span className="logo_mark"><Radar size={20} /></span>
         <span className="logo_text">WelfareMap</span>
-        <span className="logo_badge">AI 레이더</span>
+        <span className="logo_badge">지역 복지</span>
       </Logo>
 
       <LocationBadge

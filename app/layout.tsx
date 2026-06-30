@@ -4,7 +4,7 @@ import StyledComponentsRegistry from './lib/registry';
 
 export const metadata: Metadata = {
   title: 'WelfareMap | AI 지역생활 복지 레이더',
-  description: '내 위치와 상황에 맞는 복지 정책, 마감 임박 지원, 주변 생활 정보를 한눈에 확인하는 서비스',
+  description: '내 위치 기준 복지 정책, 마감 지원, 주변 기관, 저장한 항목을 한 화면에서 확인하는 지역생활 복지 대시보드',
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {

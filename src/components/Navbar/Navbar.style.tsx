@@ -7,19 +7,19 @@ export const NavbarWrapper = styled.header`
   top: 0;
   z-index: 100;
   width: 100%;
-  min-height: 72px;
-  background: rgba(255, 255, 255, 0.86);
-  border-bottom: 1px solid rgba(220, 231, 225, 0.9);
-  backdrop-filter: blur(18px);
+  min-height: 68px;
+  padding: 1rem clamp(1.4rem, 3.2vw, 3.2rem);
+  border-bottom: 1px solid var(--color-line);
+  background: rgba(247, 248, 245, 0.94);
+  backdrop-filter: blur(14px);
   display: grid;
-  grid-template-columns: 1fr auto 1fr;
+  grid-template-columns: auto minmax(180px, 1fr) auto;
   align-items: center;
-  gap: 1.6rem;
-  padding: 1.2rem clamp(1.6rem, 4vw, 4rem);
+  gap: 1.2rem;
 
-  @media (max-width: 720px) {
+  @media (max-width: 760px) {
     grid-template-columns: 1fr auto;
-    min-height: auto;
+    align-items: start;
   }
 `;
 
@@ -27,67 +27,70 @@ export const Logo = styled.button`
   display: inline-flex;
   align-items: center;
   gap: 0.8rem;
-  justify-self: start;
+  min-height: 44px;
   border: 0;
   background: transparent;
   color: var(--color-ink);
   cursor: pointer;
 
   .logo_mark {
-    width: 38px;
-    height: 38px;
-    border-radius: 10px;
+    width: 36px;
+    height: 36px;
+    border-radius: var(--radius-sm);
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    background: var(--color-navy);
+    background: var(--color-secondary);
     color: #ffffff;
   }
 
   .logo_text {
-    font-size: 2rem;
+    font-size: 1.9rem;
     font-weight: 800;
   }
 
   .logo_badge {
-    padding: 0.35rem 0.7rem;
+    padding: 0.32rem 0.68rem;
     border-radius: 999px;
-    background: var(--color-teal-soft);
-    color: var(--color-teal-dark);
-    font-size: 1.15rem;
+    background: var(--color-surface-muted);
+    color: var(--color-primary);
+    font-size: 1.1rem;
     font-weight: 800;
   }
 
   @media (max-width: 520px) {
-    .logo_badge { display: none; }
+    .logo_badge {
+      display: none;
+    }
   }
 `;
 
 export const LocationBadge = styled.button`
-  justify-self: center;
+  justify-self: start;
   display: inline-flex;
   align-items: center;
-  gap: 0.7rem;
-  padding: 1rem 1.5rem;
-  border: 1px solid var(--color-line);
-  border-radius: 999px;
-  background: #ffffff;
-  color: var(--color-navy);
-  font-size: 1.45rem;
-  font-weight: 700;
+  gap: 0.65rem;
+  max-width: 360px;
+  padding: 0 1.2rem;
+  border: 1px solid var(--color-line-strong);
+  border-radius: var(--radius-md);
+  background: var(--color-surface);
+  color: var(--color-secondary);
+  font-size: 1.35rem;
+  font-weight: 800;
   cursor: pointer;
-  box-shadow: var(--shadow-sm);
-  transition: border-color 0.2s, color 0.2s, transform 0.2s;
+  transition: border-color 0.18s, color 0.18s, background 0.18s;
 
   &:hover {
-    border-color: var(--color-teal);
-    color: var(--color-teal-dark);
-    transform: translateY(-1px);
+    border-color: rgba(36, 91, 79, 0.42);
+    color: var(--color-primary);
+    background: var(--color-surface-subtle);
   }
 
-  @media (max-width: 720px) {
+  @media (max-width: 760px) {
     grid-column: 1 / -1;
     width: 100%;
+    max-width: none;
     justify-content: center;
     order: 3;
   }
@@ -97,24 +100,26 @@ export const NavRight = styled.div`
   justify-self: end;
   display: flex;
   align-items: center;
-  gap: 0.8rem;
+  gap: 0.7rem;
 `;
 
 export const IconButton = styled.button`
   width: 44px;
   height: 44px;
-  border-radius: 12px;
+  border-radius: var(--radius-md);
   border: 1px solid var(--color-line);
-  background: #ffffff;
-  color: var(--color-navy);
+  background: var(--color-surface);
+  color: var(--color-secondary);
   display: inline-flex;
   align-items: center;
   justify-content: center;
   cursor: pointer;
+  transition: border-color 0.18s, color 0.18s, background 0.18s;
 
   &:hover {
-    border-color: var(--color-teal);
-    color: var(--color-teal-dark);
+    border-color: rgba(36, 91, 79, 0.42);
+    color: var(--color-primary);
+    background: var(--color-surface-subtle);
   }
 `;
 
@@ -122,10 +127,10 @@ export const SavedLink = styled.a`
   position: relative;
   width: 44px;
   height: 44px;
-  border-radius: 12px;
+  border-radius: var(--radius-md);
   border: 1px solid var(--color-line);
-  background: #ffffff;
-  color: var(--color-navy);
+  background: var(--color-surface);
+  color: var(--color-secondary);
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -133,8 +138,8 @@ export const SavedLink = styled.a`
   cursor: pointer;
 
   &:hover {
-    border-color: var(--color-teal);
-    color: var(--color-teal-dark);
+    border-color: rgba(36, 91, 79, 0.42);
+    color: var(--color-primary);
   }
 
   .saved_badge {
@@ -145,7 +150,7 @@ export const SavedLink = styled.a`
     height: 20px;
     padding: 0 0.45rem;
     border-radius: 999px;
-    background: var(--color-teal);
+    background: var(--color-primary);
     color: #ffffff;
     font-size: 1.05rem;
     font-weight: 800;
@@ -160,19 +165,23 @@ export const LoginButton = styled.button`
   min-height: 44px;
   display: inline-flex;
   align-items: center;
-  gap: 0.7rem;
-  padding: 0 1.5rem;
-  border: 0;
-  border-radius: 12px;
-  background: var(--color-teal);
+  gap: 0.65rem;
+  padding: 0 1.3rem;
+  border: 1px solid var(--color-secondary);
+  border-radius: var(--radius-md);
+  background: var(--color-secondary);
   color: #ffffff;
-  font-size: 1.45rem;
+  font-size: 1.35rem;
   font-weight: 800;
   cursor: pointer;
-  transition: background 0.2s, transform 0.2s;
+  transition: background 0.18s, border-color 0.18s;
 
   &:hover {
-    background: var(--color-teal-dark);
-    transform: translateY(-1px);
+    border-color: var(--color-primary-dark);
+    background: var(--color-primary-dark);
+  }
+
+  @media (max-width: 520px) {
+    padding: 0 1rem;
   }
 `;

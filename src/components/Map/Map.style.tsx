@@ -5,11 +5,11 @@ import styled from 'styled-components';
 export const MapWrapper = styled.div`
   width: 100%;
   height: 440px;
-  border-radius: 20px;
+  border-radius: var(--radius-md);
   overflow: hidden;
   border: 1px solid var(--color-line);
   position: relative;
-  background: var(--color-surface-soft);
+  background: var(--color-surface-muted);
 
   @media (max-width: 768px) {
     height: 320px;
@@ -35,9 +35,9 @@ export const MapControlBtn = styled.button`
   width: 42px;
   height: 42px;
   border: 1px solid var(--color-line);
-  border-radius: 12px;
+  border-radius: var(--radius-sm);
   background: rgba(255, 255, 255, 0.92);
-  color: var(--color-navy);
+  color: var(--color-secondary);
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -56,13 +56,13 @@ export const MyLocationBtn = styled.button`
   min-height: 44px;
   padding: 0 1.4rem;
   border: 0;
-  border-radius: 999px;
-  background: var(--color-teal);
+  border-radius: var(--radius-md);
+  background: var(--color-primary);
   color: #ffffff;
   font-size: 1.35rem;
   font-weight: 800;
   cursor: pointer;
-  box-shadow: 0 12px 24px rgba(20, 134, 109, 0.24);
+  box-shadow: var(--shadow-sm);
 
   &:disabled {
     opacity: 0.72;
@@ -79,7 +79,7 @@ export const LoadingOverlay = styled.div`
   align-items: center;
   justify-content: center;
   gap: 1rem;
-  background: var(--color-surface-soft);
+  background: var(--color-surface-muted);
 
   .loading_text {
     color: var(--color-muted);
@@ -91,7 +91,7 @@ export const LoadingOverlay = styled.div`
     width: 36px;
     height: 36px;
     border: 3px solid #d7e5de;
-    border-top-color: var(--color-teal);
+    border-top-color: var(--color-primary);
     border-radius: 50%;
     animation: spin 0.8s linear infinite;
   }
@@ -110,12 +110,12 @@ export const MarkerInfoBox = styled.div`
   transform: translateX(-50%);
   padding: 1.6rem;
   border: 1px solid var(--color-line);
-  border-radius: 18px;
+  border-radius: var(--radius-lg);
   background: #ffffff;
   box-shadow: var(--shadow-md);
 
   .info_category {
-    color: var(--color-teal-dark);
+    color: var(--color-primary);
     font-size: 1.2rem;
     font-weight: 800;
     margin-bottom: 0.5rem;
@@ -146,7 +146,7 @@ export const MarkerInfoBox = styled.div`
     min-height: 34px;
     border: 0;
     border-radius: 999px;
-    background: var(--color-surface-soft);
+    background: var(--color-surface-muted);
     color: var(--color-muted);
     display: inline-flex;
     align-items: center;
@@ -169,7 +169,7 @@ export const MarkerInfoBox = styled.div`
     align-items: center;
     gap: 0.4rem;
     margin-top: 1rem;
-    color: var(--color-teal-dark);
+    color: var(--color-primary);
     font-size: 1.35rem;
     font-weight: 800;
     text-decoration: underline;
@@ -186,7 +186,7 @@ export const FacilityBadge = styled.div`
   border-radius: 999px;
   background: rgba(255, 255, 255, 0.94);
   border: 1px solid var(--color-line);
-  color: var(--color-navy);
+  color: var(--color-secondary);
   font-size: 1.25rem;
   font-weight: 800;
   box-shadow: var(--shadow-sm);

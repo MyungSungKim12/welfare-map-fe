@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { ArrowRight, CalendarClock, CheckCircle2, LocateFixed, Search, Sparkles } from 'lucide-react';
+import { ArrowRight, CalendarClock, CheckCircle2, ClipboardList, LocateFixed, Search, TableProperties } from 'lucide-react';
 import {
   HeroWrapper,
   HeroInner,
@@ -45,14 +45,14 @@ export default function Hero({ location, insights, isLoading, onSearch, onDetect
       <HeroInner>
         <HeroCopy>
           <HeroEyebrow>
-            <Sparkles size={17} />
-            AI 지역생활 복지 레이더
+            <TableProperties size={17} />
+            지역생활 대시보드
           </HeroEyebrow>
           <HeroTitle>
-            오늘 내 주변에서 받을 수 있는 지원을 먼저 보여드려요.
+            {location.sidoName} {location.sigunguName} 기준, 확인할 복지와 주변 기관
           </HeroTitle>
           <HeroSubtitle>
-            {location.sidoName} {location.sigunguName} 기준으로 복지 정책, 마감 임박 지원, 주변 생활 정보를 한 화면에서 정리합니다.
+            마감이 가까운 지원, 새로 갱신된 정책, 저장한 항목과 주변 복지기관을 한 화면에서 점검하세요.
           </HeroSubtitle>
 
           <HeroActions>
@@ -91,13 +91,15 @@ export default function Hero({ location, insights, isLoading, onSearch, onDetect
 
         <HeroPanel aria-label="오늘의 추천 요약">
           <div className="panel_header">
-            <span>오늘의 레이더</span>
-            <strong>{location.sigunguName}</strong>
+            <div>
+              <span>오늘 확인할 일</span>
+              <strong>{location.sigunguName} 작업 목록</strong>
+            </div>
           </div>
           <InsightCard $tone="urgent">
             <CalendarClock size={22} />
             <div>
-              <span>마감 임박</span>
+              <span>마감 점검</span>
               <strong>{urgentTitle ?? '신청 기한이 가까운 지원을 먼저 확인하세요.'}</strong>
               <p>
                 {isLoading
@@ -116,6 +118,14 @@ export default function Hero({ location, insights, isLoading, onSearch, onDetect
                   ? '신규 정책 정보를 조회하고 있습니다.'
                   : `${insights.newCount}건의 최근 갱신 정책을 확인했습니다.`}
               </p>
+            </div>
+          </InsightCard>
+          <InsightCard $tone="default">
+            <ClipboardList size={22} />
+            <div>
+              <span>신청 준비</span>
+              <strong>관심 있는 정책은 저장해두고 다음 단계에서 조건을 확인하세요.</strong>
+              <p>로그인 연동 후에는 저장 항목과 신청 체크리스트를 계정 기준으로 이어갈 예정입니다.</p>
             </div>
           </InsightCard>
           <a href="#welfare-section" className="panel_link">

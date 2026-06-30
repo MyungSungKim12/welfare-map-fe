@@ -5,29 +5,29 @@ import styled from 'styled-components';
 export const ListWrapper = styled.div`
   display: flex;
   flex-direction: column;
-  gap: 1.2rem;
+  gap: 1rem;
 
   .list-stack {
     display: flex;
     flex-direction: column;
-    gap: 1rem;
+    gap: 0.8rem;
   }
 
   .skeleton-card {
-    min-height: 150px;
+    min-height: 132px;
     display: flex;
     flex-direction: column;
-    gap: 1rem;
-    padding: 2rem;
+    gap: 0.9rem;
+    padding: 1.4rem;
     border: 1px solid var(--color-line);
-    border-radius: 18px;
-    background: #ffffff;
+    border-radius: var(--radius-md);
+    background: var(--color-surface);
   }
 
   .skeleton-card span {
-    height: 16px;
+    height: 14px;
     border-radius: 999px;
-    background: linear-gradient(90deg, #edf2ef 25%, #dfe8e3 50%, #edf2ef 75%);
+    background: linear-gradient(90deg, #edf1ee 25%, #dfe5e0 50%, #edf1ee 75%);
     background-size: 200% 100%;
     animation: shimmer 1.4s infinite;
   }
@@ -40,28 +40,28 @@ export const ListWrapper = styled.div`
     display: flex;
     align-items: center;
     justify-content: center;
-    gap: 0.6rem;
-    padding-top: 0.6rem;
+    gap: 0.5rem;
+    padding-top: 0.4rem;
     flex-wrap: wrap;
   }
 
   .pagination button {
-    min-height: 38px;
-    min-width: 38px;
-    padding: 0 1rem;
+    min-height: 36px;
+    min-width: 36px;
+    padding: 0 0.85rem;
     border: 1px solid var(--color-line);
-    border-radius: 10px;
+    border-radius: var(--radius-sm);
     background: #ffffff;
     color: var(--color-muted);
-    font-size: 1.3rem;
+    font-size: 1.22rem;
     font-weight: 800;
     cursor: pointer;
   }
 
   .pagination button.active {
-    background: var(--color-navy);
+    background: var(--color-secondary);
     color: #ffffff;
-    border-color: var(--color-navy);
+    border-color: var(--color-secondary);
   }
 
   .pagination button:disabled {
@@ -77,35 +77,35 @@ export const ListHeader = styled.div`
   gap: 1rem;
 
   .eyebrow {
-    color: var(--color-teal-dark);
-    font-size: 1.2rem;
+    color: var(--color-primary);
+    font-size: 1.12rem;
     font-weight: 800;
-    margin-bottom: 0.3rem;
+    margin-bottom: 0.25rem;
   }
 
   .result_count {
     color: var(--color-muted);
-    font-size: 1.45rem;
+    font-size: 1.32rem;
     font-weight: 700;
 
     span {
-      color: var(--color-teal-dark);
-      font-size: 1.75rem;
+      color: var(--color-primary);
+      font-size: 1.62rem;
       font-weight: 800;
     }
   }
 
   button {
-    min-height: 40px;
+    min-height: 38px;
     display: inline-flex;
     align-items: center;
     gap: 0.5rem;
-    padding: 0 1.1rem;
+    padding: 0 1rem;
     border: 1px solid var(--color-line);
-    border-radius: 999px;
+    border-radius: var(--radius-sm);
     background: #ffffff;
-    color: var(--color-navy);
-    font-size: 1.3rem;
+    color: var(--color-secondary);
+    font-size: 1.22rem;
     font-weight: 800;
     cursor: pointer;
   }
@@ -116,34 +116,34 @@ export const EmptyState = styled.div`
   flex-direction: column;
   align-items: flex-start;
   justify-content: center;
-  min-height: 220px;
-  gap: 0.8rem;
-  padding: 2.2rem;
-  background: #ffffff;
-  border-radius: 18px;
-  border: 1px dashed var(--color-line);
+  min-height: 190px;
+  gap: 0.75rem;
+  padding: 1.8rem;
+  background: var(--color-surface-subtle);
+  border-radius: var(--radius-md);
+  border: 1px dashed var(--color-line-strong);
 
   .empty_title {
     color: var(--color-ink);
-    font-size: 1.8rem;
+    font-size: 1.65rem;
     font-weight: 800;
   }
 
   .empty_text {
     color: var(--color-muted);
-    font-size: 1.45rem;
+    font-size: 1.35rem;
     line-height: 1.6;
   }
 
   button {
-    margin-top: 0.6rem;
+    margin-top: 0.5rem;
     min-height: 42px;
-    padding: 0 1.4rem;
+    padding: 0 1.25rem;
     border: 0;
-    border-radius: 12px;
-    background: var(--color-teal);
+    border-radius: var(--radius-sm);
+    background: var(--color-primary);
     color: #ffffff;
-    font-size: 1.4rem;
+    font-size: 1.32rem;
     font-weight: 800;
     cursor: pointer;
   }

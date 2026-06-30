@@ -4,15 +4,15 @@ import styled from 'styled-components';
 
 export const BannerWrapper = styled.section`
   width: 100%;
-  padding: 0 clamp(1.6rem, 4vw, 4rem) 4.4rem;
+  padding: 0 clamp(1.4rem, 3.2vw, 3.2rem) 2.4rem;
 `;
 
 export const BannerInner = styled.div`
-  max-width: 1280px;
+  width: min(1240px, 100%);
   margin: 0 auto;
   display: grid;
   grid-template-columns: repeat(3, 1fr);
-  gap: 1.4rem;
+  gap: 0.9rem;
 
   @media (max-width: 900px) {
     grid-template-columns: 1fr;
@@ -21,50 +21,53 @@ export const BannerInner = styled.div`
 
 export const BannerCard = styled.article<{ $type: 'new' | 'urgent' | 'guide' }>`
   display: grid;
-  grid-template-columns: auto 1fr;
-  gap: 1.3rem;
-  padding: 1.8rem;
-  background: #ffffff;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: 1rem;
+  min-height: 116px;
+  padding: 1.3rem;
+  background: var(--color-surface);
   border: 1px solid var(--color-line);
-  border-radius: 18px;
-  box-shadow: 0 10px 28px rgba(16, 32, 39, 0.05);
+  border-left: 4px solid ${({ $type }) =>
+    $type === 'urgent' ? 'var(--color-danger)' :
+    $type === 'new' ? 'var(--color-primary)' : 'var(--color-warn)'};
+  border-radius: var(--radius-md);
 
   .banner_icon {
-    width: 44px;
-    height: 44px;
-    border-radius: 12px;
+    width: 38px;
+    height: 38px;
+    border-radius: var(--radius-sm);
     display: inline-flex;
     align-items: center;
     justify-content: center;
     color: ${({ $type }) =>
-      $type === 'urgent' ? 'var(--color-red)' :
-      $type === 'new' ? 'var(--color-teal-dark)' : 'var(--color-amber)'};
+      $type === 'urgent' ? 'var(--color-danger)' :
+      $type === 'new' ? 'var(--color-primary)' : 'var(--color-warn)'};
     background: ${({ $type }) =>
-      $type === 'urgent' ? 'var(--color-red-soft)' :
-      $type === 'new' ? 'var(--color-teal-soft)' : 'var(--color-amber-soft)'};
+      $type === 'urgent' ? 'var(--color-danger-soft)' :
+      $type === 'new' ? 'var(--color-info-soft)' : 'var(--color-warn-soft)'};
   }
 
   .banner_badge {
     display: inline-flex;
-    margin-bottom: 0.6rem;
+    margin-bottom: 0.45rem;
     color: ${({ $type }) =>
-      $type === 'urgent' ? 'var(--color-red)' :
-      $type === 'new' ? 'var(--color-teal-dark)' : 'var(--color-amber)'};
-    font-size: 1.2rem;
+      $type === 'urgent' ? 'var(--color-danger)' :
+      $type === 'new' ? 'var(--color-primary)' : 'var(--color-warn)'};
+    font-size: 1.12rem;
     font-weight: 800;
   }
 
   .banner_title {
     color: var(--color-ink);
-    font-size: 1.6rem;
+    font-size: 1.42rem;
     font-weight: 800;
     line-height: 1.45;
   }
 
   .banner_desc {
-    margin-top: 0.5rem;
+    margin-top: 0.45rem;
     color: var(--color-muted);
-    font-size: 1.35rem;
-    line-height: 1.55;
+    font-size: 1.24rem;
+    line-height: 1.5;
   }
 `;

@@ -567,6 +567,24 @@ Notion 기준으로 `WelfareList_DB` 설계가 존재합니다.
 - 작업 히스토리
   - Notion `작업 히스토리`에 `2026.06.30 (6차) Notion 산출 문서 4종 최신화` 섹션 추가
 
+### 2026.07.01 공공서비스형 UI 리디자인
+
+- 디자인 방향
+  - 기존 큰 히어로, 반복 카드, 강한 초록/남색 강조, AI 과시 문구를 줄이고 공공서비스형 생활 대시보드 톤으로 전환
+  - `docs/superpowers/specs/2026-07-01-welfaremap-redesign-design.md`에 전체 디자인 명세 작성
+  - `docs/superpowers/plans/2026-07-01-welfaremap-redesign.md`에 구현 계획 작성
+- 전역 디자인 시스템
+  - `globals.css` 색상 토큰을 저채도 GovTech 팔레트로 교체
+  - 카드 반경, 경계선, 포커스 스타일, workspace 레이아웃 기준 재정의
+- 화면 리디자인
+  - Navbar를 서비스 콘솔 상단바처럼 압축
+  - Hero를 홍보형 랜딩에서 현재 지역 기준 command center로 전환
+  - LifeStage를 큰 카드 그리드에서 빠른 필터 레일로 축소
+  - NoticeBanner를 action queue 형태로 정리
+  - PopularList를 우선 확인할 지원 목록 톤으로 정리
+  - SavedSection, Filter, Map, WelfareCard, WelfareList, LocationModal의 장식성을 낮추고 정보 밀도 개선
+  - Statistics와 Footer를 마케팅 섹션이 아니라 데이터 요약/출처 중심으로 톤 다운
+
 ## 15. 운영 메모
 
 - 작업 히스토리와 의사결정은 기존처럼 Notion에 계속 업데이트합니다.

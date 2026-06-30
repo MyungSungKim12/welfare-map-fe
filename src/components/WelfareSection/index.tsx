@@ -45,9 +45,9 @@ export default function WelfareSection({
       <section className="welfare-workspace">
         <div className="workspace-header">
           <div>
-            <span>지역 복지 탐색</span>
-            <h2>지도와 리스트를 함께 보며 지원 후보를 좁혀보세요</h2>
-            <p>현재 위치와 선택 조건을 기준으로 지역 복지와 전국 공통 복지를 함께 조회합니다.</p>
+            <span>복지 탐색 작업공간</span>
+            <h2>정책 목록과 주변 기관을 함께 확인하세요</h2>
+            <p>현재 위치와 선택 조건을 기준으로 지역 복지, 전국 공통 지원, 주변 생활 시설을 한 화면에서 비교합니다.</p>
           </div>
           <div className="workspace-summary">
             <strong>{welfareData.isLoading ? '-' : welfareData.allItems.length}</strong>

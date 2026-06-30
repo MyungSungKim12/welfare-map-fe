@@ -327,8 +327,8 @@ const Overlay = styled.div`
   align-items: center;
   justify-content: center;
   padding: 2rem;
-  background: rgba(15, 29, 38, 0.54);
-  backdrop-filter: blur(8px);
+  background: rgba(23, 32, 28, 0.42);
+  backdrop-filter: blur(6px);
 `;
 
 const Modal = styled.div`
@@ -337,10 +337,10 @@ const Modal = styled.div`
   overflow: hidden;
   display: flex;
   flex-direction: column;
-  border: 1px solid rgba(255, 255, 255, 0.74);
-  border-radius: 28px;
+  border: 1px solid var(--color-line);
+  border-radius: var(--radius-lg);
   background: #ffffff;
-  box-shadow: 0 28px 80px rgba(16, 32, 39, 0.28);
+  box-shadow: var(--shadow-md);
 `;
 
 const ModalHeader = styled.div`
@@ -353,7 +353,7 @@ const ModalHeader = styled.div`
   span {
     display: block;
     margin-bottom: 0.5rem;
-    color: var(--color-teal-dark);
+    color: var(--color-primary);
     font-size: 1.22rem;
     font-weight: 800;
   }
@@ -371,7 +371,7 @@ const ModalHeader = styled.div`
     min-height: 42px;
     border: 0;
     border-radius: 999px;
-    background: var(--color-surface-soft);
+    background: var(--color-surface-muted);
     color: var(--color-muted);
     display: inline-flex;
     align-items: center;
@@ -386,9 +386,9 @@ const CurrentRegion = styled.p`
   gap: 0.65rem;
   margin: 0 2.4rem 1.4rem;
   padding: 1rem 1.2rem;
-  border-radius: 16px;
-  background: var(--color-surface-soft);
-  color: var(--color-navy);
+  border-radius: var(--radius-md);
+  background: var(--color-surface-muted);
+  color: var(--color-secondary);
   font-size: 1.35rem;
   font-weight: 800;
 `;
@@ -401,8 +401,8 @@ const DetectButton = styled.button<{ $loading: boolean }>`
   min-height: 50px;
   margin: 0 2.4rem 1.4rem;
   border: 0;
-  border-radius: 16px;
-  background: ${({ $loading }) => ($loading ? '#9aa8a3' : 'var(--color-teal)')};
+  border-radius: var(--radius-md);
+  background: ${({ $loading }) => ($loading ? '#9aa8a3' : 'var(--color-primary)')};
   color: #ffffff;
   font-size: 1.48rem;
   font-weight: 800;
@@ -419,7 +419,7 @@ const SearchBox = styled.div`
   padding: 0 1.1rem;
   min-height: 50px;
   border: 1px solid var(--color-line);
-  border-radius: 16px;
+  border-radius: var(--radius-md);
   background: #ffffff;
 
   svg {
@@ -448,7 +448,7 @@ const SearchBox = styled.div`
     min-height: 32px;
     border: 0;
     border-radius: 999px;
-    background: var(--color-surface-soft);
+    background: var(--color-surface-muted);
     color: var(--color-muted);
     display: inline-flex;
     align-items: center;
@@ -474,7 +474,7 @@ const SidoList = styled.div`
   overflow-y: auto;
   padding: 1rem;
   border-right: 1px solid var(--color-line);
-  background: #f7faf8;
+  background: var(--color-surface-subtle);
 `;
 
 const DistrictList = styled.div`
@@ -489,16 +489,16 @@ const RegionButton = styled.button<{ $active: boolean }>`
   margin-bottom: 0.6rem;
   padding: 0 1.2rem;
   border: 1px solid ${({ $active }) => ($active ? 'rgba(20, 134, 109, 0.35)' : 'transparent')};
-  border-radius: 14px;
-  background: ${({ $active }) => ($active ? 'var(--color-teal-soft)' : 'transparent')};
-  color: ${({ $active }) => ($active ? 'var(--color-teal-dark)' : 'var(--color-ink)')};
+  border-radius: var(--radius-sm);
+  background: ${({ $active }) => ($active ? 'var(--color-info-soft)' : 'transparent')};
+  color: ${({ $active }) => ($active ? 'var(--color-primary)' : 'var(--color-ink)')};
   font-size: 1.4rem;
   font-weight: ${({ $active }) => ($active ? 800 : 700)};
   text-align: left;
   cursor: pointer;
 
   &:hover {
-    background: var(--color-surface-soft);
+    background: var(--color-surface-muted);
   }
 `;
 
@@ -516,7 +516,7 @@ const SearchResultItem = styled.button`
   margin-top: 0.6rem;
   padding: 1rem 1.2rem;
   border: 1px solid var(--color-line);
-  border-radius: 16px;
+  border-radius: var(--radius-md);
   background: #ffffff;
   text-align: left;
   cursor: pointer;
@@ -538,7 +538,7 @@ const SearchResultItem = styled.button`
 
   &:hover {
     border-color: rgba(20, 134, 109, 0.34);
-    background: var(--color-surface-soft);
+    background: var(--color-surface-muted);
   }
 `;
 

@@ -4,42 +4,60 @@ import styled from 'styled-components';
 
 export const LifeStageWrapper = styled.section`
   width: 100%;
-  padding: 2.4rem clamp(1.6rem, 4vw, 4rem) 4rem;
+  padding: 0 clamp(1.4rem, 3.2vw, 3.2rem) 2.4rem;
 `;
 
 export const LifeStageInner = styled.div`
-  max-width: 1280px;
+  width: min(1240px, 100%);
   margin: 0 auto;
+  padding: 1.4rem;
+  border: 1px solid var(--color-line);
+  border-radius: var(--radius-lg);
+  background: var(--color-surface);
 `;
 
 export const SectionHeader = styled.div`
-  margin-bottom: 1.8rem;
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 1.2rem;
+  margin-bottom: 1.1rem;
 
   span {
-    color: var(--color-teal-dark);
-    font-size: 1.3rem;
+    color: var(--color-primary);
+    font-size: 1.2rem;
     font-weight: 800;
   }
 
   h2 {
-    margin-top: 0.4rem;
+    margin-top: 0.25rem;
     color: var(--color-ink);
-    font-size: clamp(2.2rem, 3vw, 3rem);
+    font-size: clamp(1.8rem, 2.2vw, 2.3rem);
     font-weight: 800;
   }
 
   p {
-    margin-top: 0.7rem;
+    max-width: 520px;
     color: var(--color-muted);
-    font-size: 1.55rem;
-    line-height: 1.6;
+    font-size: 1.32rem;
+    line-height: 1.55;
+    text-align: right;
+  }
+
+  @media (max-width: 760px) {
+    align-items: flex-start;
+    flex-direction: column;
+
+    p {
+      text-align: left;
+    }
   }
 `;
 
 export const CardGrid = styled.div`
   display: grid;
   grid-template-columns: repeat(6, minmax(0, 1fr));
-  gap: 1.2rem;
+  gap: 0.8rem;
 
   @media (max-width: 1080px) {
     grid-template-columns: repeat(3, 1fr);
@@ -51,47 +69,48 @@ export const CardGrid = styled.div`
 `;
 
 export const StageCard = styled.button`
-  min-height: 150px;
-  display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: 1rem;
-  padding: 1.8rem;
-  background: #ffffff;
+  min-height: 86px;
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  align-items: center;
+  gap: 0.9rem;
+  padding: 1.1rem;
+  background: var(--color-surface-subtle);
   border: 1px solid var(--color-line);
-  border-radius: 18px;
+  border-radius: var(--radius-md);
   cursor: pointer;
-  box-shadow: 0 8px 20px rgba(16, 32, 39, 0.04);
-  transition: transform 0.2s, border-color 0.2s, box-shadow 0.2s;
+  transition: border-color 0.18s, background 0.18s;
 
   .stage_icon {
-    width: 44px;
-    height: 44px;
-    border-radius: 12px;
+    width: 38px;
+    height: 38px;
+    border-radius: var(--radius-sm);
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    background: var(--color-teal-soft);
-    color: var(--color-teal-dark);
+    background: var(--color-info-soft);
+    color: var(--color-primary);
   }
 
   .stage_label {
+    display: block;
     color: var(--color-ink);
-    font-size: 1.75rem;
+    font-size: 1.45rem;
     font-weight: 800;
+    text-align: left;
   }
 
   .stage_desc {
+    display: block;
+    margin-top: 0.2rem;
     color: var(--color-muted);
-    font-size: 1.35rem;
-    line-height: 1.5;
+    font-size: 1.18rem;
+    line-height: 1.35;
     text-align: left;
   }
 
   &:hover {
-    transform: translateY(-3px);
-    border-color: rgba(20, 134, 109, 0.35);
-    box-shadow: var(--shadow-sm);
+    border-color: rgba(36, 91, 79, 0.38);
+    background: #ffffff;
   }
 `;
