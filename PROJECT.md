@@ -64,13 +64,13 @@ WelfareMap은 사용자의 현재 위치, 생애주기, 상황, 관심사를 기
 - 실제 API 결과 기반 Hero 요약 / 알림 / 추천 후보 / 통계 섹션
 - Supabase 캐시 연동 코드와 DB migration 실제 적용
 - Kakao Local 키워드 검색 기반 주변 복지기관 마커 (복지관 / 주민센터 / 보건소 / 노인·장애인복지관 / 어린이집)
+- 복지 저장 / 북마크 (localStorage 기반 MVP, Navbar 카운트 배지 + 저장한 복지 섹션)
 
 ### 아직 더미 또는 미완성인 기능
 
 - 인기 복지 섹션 실제 데이터 연동
-- 복지 저장 / 북마크 기능
+- 북마크 Supabase 동기화 (현재는 localStorage MVP)
 - 로그인 / 마이페이지
-- Supabase 서버 환경변수 미설정 시 앱 캐시 우회 처리
 - 인기 복지 집계
 - 배치 작업
 - AI 맞춤 추천
@@ -349,14 +349,15 @@ Notion 기준으로 `WelfareList_DB` 설계가 존재합니다.
 
 **기준: 2026.06.30 우선순위 1, 2 완료 후**
 
-1. Supabase 앱 캐시 활성화
-   - FE 로컬/배포 환경에 `SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY` 등록
-   - 기본 복지 조회에서 cache miss → write → hit 흐름 검증
-   - service role key가 브라우저 번들에 노출되지 않는지 재확인
-2. 저장/북마크 MVP
-   - 로그인 전 localStorage 임시 저장 UX 설계
-   - 로그인 후 `saved_services` RLS 정책과 API 설계
-   - 저장한 복지 목록 UI 초안 작성
+1. Supabase 앱 캐시 활성화 — **2026.06.30 코드/스크립트 준비 완료, env 주입 대기**
+   - `.env.example`에 Supabase 키 가이드 보강
+   - `scripts/verify-welfare-cache.mjs` E2E 검증 스크립트 추가
+   - FE 로컬/배포 환경에 `SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY` 등록은 외부 작업 대기
+2. 저장/북마크 MVP — **2026.06.30 localStorage MVP 완료**
+   - `useBookmarks` 훅, `SavedSection` 컴포넌트, Navbar 카운트 배지 연결
+   - WelfareList → WelfareCard로 `isSaved`/`onSave` 인터페이스 연결
+   - 저장 데이터는 `welfare_bookmarks_v1` localStorage 키에 최대 200건 저장
+   - 로그인 후 `saved_services` 동기화는 인증 도입 시점에 후속 작업
 3. AI 추천 레이어 1차
    - 사용자 프로필 입력값 정의
    - 규칙 기반 적합도 점수 계산
@@ -476,6 +477,23 @@ Notion 기준으로 `WelfareList_DB` 설계가 존재합니다.
   - `npm run build` 통과
   - BE `.\gradlew.bat test` 통과
   - 로컬 API `GET /api/welfare/national?numOfRows=1` 200, `cache: "bypass"` 확인
+
+### 2026.06.30 우선순위 A.1, A.2 진행
+
+- A.1 Supabase 앱 캐시 활성화 준비
+  - `.env.example`에 Kakao / 복지로 / Supabase / TTL 그룹화 및 주석 보강
+  - `scripts/verify-welfare-cache.mjs` 추가: dev 서버 기동 후 캐시 miss → hit 사이클 자동 검증, env 미설정 시 bypass 안내
+  - env 키 주입은 외부 작업이라 사용자에게 위임
+- A.2 저장/북마크 MVP (localStorage)
+  - `src/hooks/useBookmarks.ts` 추가: `welfare_bookmarks_v1` 키에 최대 200건 저장, hydration-safe useEffect 패턴 적용
+  - `src/components/SavedSection/` 신규 컴포넌트: 저장한 복지 카드 리스트 + 전체 비우기 + 빈 상태 자동 숨김
+  - Navbar에 `SavedLink` + 카운트 배지(`99+` 클램프) 추가, `#saved-section` 앵커 스크롤
+  - `WelfareList` / `WelfareSection` / `Home`에 `savedIds` + `onToggleSave` prop 체이닝
+  - 기존 `WelfareCard`의 placeholder save 인터페이스 실연결
+- 검증
+  - `npm run lint` 통과
+  - `npm run build` 통과 (10/10 페이지)
+  - Node 기본 테스트 14/14 통과
 
 ## 15. 운영 메모
 

@@ -4,9 +4,12 @@ import { RefreshCw } from 'lucide-react';
 import WelfareCard from '@/components/WelfareCard';
 import { ListWrapper, ListHeader, EmptyState } from './WelfareList.style';
 import { UseWelfareDataReturn } from '@/hooks/useWelfareData';
+import type { WelfareItem } from '@/types/welfare';
 
 interface Props {
   data: UseWelfareDataReturn;
+  savedIds: Set<string>;
+  onToggleSave: (item: WelfareItem) => void;
 }
 
 function SkeletonCard() {
@@ -43,7 +46,7 @@ function Pagination({ page, totalPages, setPage }: {
   );
 }
 
-export default function WelfareList({ data }: Props) {
+export default function WelfareList({ data, savedIds, onToggleSave }: Props) {
   const { items, allItems, isLoading, error, page, totalPages, setPage, refetch } = data;
   const startIndex = allItems.length === 0 ? 0 : (page - 1) * 5 + 1;
   const endIndex = Math.min(page * 5, allItems.length);
@@ -100,7 +103,12 @@ export default function WelfareList({ data }: Props) {
       {!isLoading && !error && items.length > 0 && (
         <div className="list-stack">
           {items.map((item) => (
-            <WelfareCard key={item.id} welfare={item} isSaved={false} onSave={() => {}} />
+            <WelfareCard
+              key={item.id}
+              welfare={item}
+              isSaved={savedIds.has(item.id)}
+              onSave={() => onToggleSave(item)}
+            />
           ))}
         </div>
       )}

@@ -118,6 +118,44 @@ export const IconButton = styled.button`
   }
 `;
 
+export const SavedLink = styled.a`
+  position: relative;
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
+  border: 1px solid var(--color-line);
+  background: #ffffff;
+  color: var(--color-navy);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  text-decoration: none;
+  cursor: pointer;
+
+  &:hover {
+    border-color: var(--color-teal);
+    color: var(--color-teal-dark);
+  }
+
+  .saved_badge {
+    position: absolute;
+    top: -6px;
+    right: -6px;
+    min-width: 20px;
+    height: 20px;
+    padding: 0 0.45rem;
+    border-radius: 999px;
+    background: var(--color-teal);
+    color: #ffffff;
+    font-size: 1.05rem;
+    font-weight: 800;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    line-height: 1;
+  }
+`;
+
 export const LoginButton = styled.button`
   min-height: 44px;
   display: inline-flex;

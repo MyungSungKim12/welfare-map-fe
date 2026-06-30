@@ -6,7 +6,7 @@ import Filter from '@/components/Filter';
 import WelfareList from '@/components/WelfareList';
 import Map from '@/components/Map';
 import LocationModal from '@/components/LocationModal';
-import { FilterType } from '@/types/welfare';
+import { FilterType, WelfareItem } from '@/types/welfare';
 import { LocationInfo } from '@/hooks/useLocation';
 import { UseWelfareDataReturn } from '@/hooks/useWelfareData';
 
@@ -18,6 +18,8 @@ interface Props {
   filter: FilterType;
   onFilterChange: (filter: FilterType) => void;
   welfareData: UseWelfareDataReturn;
+  savedIds: Set<string>;
+  onToggleSave: (item: WelfareItem) => void;
 }
 
 export default function WelfareSection({
@@ -28,6 +30,8 @@ export default function WelfareSection({
   filter,
   onFilterChange,
   welfareData,
+  savedIds,
+  onToggleSave,
 }: Props) {
   const [showModal, setShowModal] = useState(false);
 
@@ -75,7 +79,7 @@ export default function WelfareSection({
                 <ListChecks size={18} />
                 지원 후보 목록
               </div>
-              <WelfareList data={welfareData} />
+              <WelfareList data={welfareData} savedIds={savedIds} onToggleSave={onToggleSave} />
             </div>
           </div>
         </div>

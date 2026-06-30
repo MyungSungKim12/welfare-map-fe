@@ -1,16 +1,17 @@
 'use client';
 
-import { Bell, LogIn, MapPin, Radar } from 'lucide-react';
-import { NavbarWrapper, Logo, LocationBadge, NavRight, LoginButton, IconButton } from './Navbar.style';
+import { Bell, Bookmark, LogIn, MapPin, Radar } from 'lucide-react';
+import { NavbarWrapper, Logo, LocationBadge, NavRight, LoginButton, IconButton, SavedLink } from './Navbar.style';
 import { LocationInfo } from '@/hooks/useLocation';
 
 interface Props {
   location: LocationInfo;
   isLocating: boolean;
   detectLocation: () => void;
+  savedCount?: number;
 }
 
-export default function Navbar({ location, isLocating, detectLocation }: Props) {
+export default function Navbar({ location, isLocating, detectLocation, savedCount = 0 }: Props) {
   const displayName = `${location.sidoName.replace('광역시', '').replace('특별시', '')} ${location.sigunguName}`;
 
   return (
@@ -31,6 +32,12 @@ export default function Navbar({ location, isLocating, detectLocation }: Props) 
       </LocationBadge>
 
       <NavRight>
+        {savedCount > 0 && (
+          <SavedLink href="#saved-section" title="저장한 복지">
+            <Bookmark size={18} />
+            <span className="saved_badge">{savedCount > 99 ? '99+' : savedCount}</span>
+          </SavedLink>
+        )}
         <IconButton type="button" title="알림">
           <Bell size={18} />
         </IconButton>
