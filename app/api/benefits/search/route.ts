@@ -8,7 +8,8 @@ import {
   getActiveBenefitSources,
   getPlannedBenefitSources,
 } from '@/lib/benefits/sources';
-import type { BenefitSourceDescriptor, BenefitSourceResult, NormalizedBenefit } from '@/types/benefit';
+import { resolveIntent } from '@/lib/ai/resolver';
+import type { BenefitIntent, BenefitSourceDescriptor, BenefitSourceResult, NormalizedBenefit } from '@/types/benefit';
 import type { WelfareItem } from '@/types/welfare';
 
 interface WelfareApiResponse {
@@ -32,6 +33,30 @@ const SITUATION_TO_KEY_CODE: Record<string, string> = {
   all: '',
 };
 
+const AGE_STAGES = new Set(['child', 'youth', 'middle', 'senior']);
+const SITUATION_STAGES = new Set(['newlywed', 'pregnant', 'job', 'disability', 'lowincome']);
+
+/** intent.lifeStage 를 URL param 자리 (ageGroup / situation) 로 나눠 매핑. */
+function applyIntentToParams(params: URLSearchParams, intent: BenefitIntent) {
+  if (intent.lifeStage) {
+    if (AGE_STAGES.has(intent.lifeStage) && !params.get('ageGroup')) {
+      params.set('ageGroup', intent.lifeStage);
+    }
+    if (SITUATION_STAGES.has(intent.lifeStage) && !params.get('situation')) {
+      params.set('situation', intent.lifeStage);
+    }
+  }
+  if (!params.get('apiKeyword') && intent.keywords.length > 0) {
+    params.set('apiKeyword', intent.keywords[0]);
+  }
+  if (intent.region?.sido && !params.get('sidoName')) {
+    params.set('sidoName', intent.region.sido);
+  }
+  if (intent.region?.sigungu && !params.get('sigunguName')) {
+    params.set('sigunguName', intent.region.sigungu);
+  }
+}
+
 async function readWelfareItems(url: string): Promise<WelfareItem[]> {
   const response = await fetch(url, { cache: 'no-store' });
   if (!response.ok) return [];
@@ -39,29 +64,28 @@ async function readWelfareItems(url: string): Promise<WelfareItem[]> {
   return data.items ?? [];
 }
 
-function buildSourceUrl(req: NextRequest, source: BenefitSourceDescriptor) {
-  const { searchParams, origin } = req.nextUrl;
-  const lifeArray = AGE_TO_LIFE_CODE[searchParams.get('ageGroup') ?? 'all'] ?? '';
-  const srchKeyCode = SITUATION_TO_KEY_CODE[searchParams.get('situation') ?? 'all'] ?? '';
-  const numOfRows = searchParams.get('numOfRows') ?? '100';
+function buildSourceUrl(origin: string, source: BenefitSourceDescriptor, params: URLSearchParams) {
+  const lifeArray = AGE_TO_LIFE_CODE[params.get('ageGroup') ?? 'all'] ?? '';
+  const srchKeyCode = SITUATION_TO_KEY_CODE[params.get('situation') ?? 'all'] ?? '';
+  const numOfRows = params.get('numOfRows') ?? '100';
 
   if (source.id === 'bokjiro-local') {
-    const params = new URLSearchParams({
+    const built = new URLSearchParams({
       numOfRows,
-      sidoCd: searchParams.get('sidoCd') ?? '28',
-      sidoName: searchParams.get('sidoName') ?? '인천광역시',
-      sigunguName: searchParams.get('sigunguName') ?? '',
+      sidoCd: params.get('sidoCd') ?? '28',
+      sidoName: params.get('sidoName') ?? '인천광역시',
+      sigunguName: params.get('sigunguName') ?? '',
     });
-    if (lifeArray) params.set('lifeArray', lifeArray);
-    if (srchKeyCode) params.set('srchKeyCode', srchKeyCode);
-    return `${origin}/api/welfare/local?${params.toString()}`;
+    if (lifeArray) built.set('lifeArray', lifeArray);
+    if (srchKeyCode) built.set('srchKeyCode', srchKeyCode);
+    return `${origin}/api/welfare/local?${built.toString()}`;
   }
 
   if (source.id === 'bokjiro-national') {
-    const params = new URLSearchParams({ numOfRows });
-    if (lifeArray) params.set('lifeArray', lifeArray);
-    if (srchKeyCode) params.set('srchKeyCode', srchKeyCode);
-    return `${origin}/api/welfare/national?${params.toString()}`;
+    const built = new URLSearchParams({ numOfRows });
+    if (lifeArray) built.set('lifeArray', lifeArray);
+    if (srchKeyCode) built.set('srchKeyCode', srchKeyCode);
+    return `${origin}/api/welfare/national?${built.toString()}`;
   }
 
   return null;
@@ -83,12 +107,13 @@ function textMatches(item: NormalizedBenefit, keyword: string) {
 }
 
 async function searchSource(
-  req: NextRequest,
+  origin: string,
   source: BenefitSourceDescriptor,
+  params: URLSearchParams,
   keyword: string,
   fetchedAt: string,
 ): Promise<BenefitSourceResult> {
-  const url = buildSourceUrl(req, source);
+  const url = buildSourceUrl(origin, source, params);
   if (!url) return { source, items: [] };
 
   try {
@@ -103,15 +128,27 @@ async function searchSource(
 }
 
 export async function GET(req: NextRequest) {
-  const query = req.nextUrl.searchParams.get('q') ?? '';
-  const apiKeyword = req.nextUrl.searchParams.get('apiKeyword') ?? '';
-  const keyword = apiKeyword || query;
+  const { origin } = req.nextUrl;
+  const params = new URLSearchParams(req.nextUrl.searchParams);
+
+  const query = params.get('q') ?? '';
+  const explicitKeyword = params.get('apiKeyword') ?? '';
+
+  // 자연어 query 가 있고 apiKeyword 가 명시적으로 오지 않았을 때만 intent 파싱.
+  // URL 이 이미 조건을 강제한 경우엔 사용자 의도가 이미 확정된 것이므로 intent 는 참고용.
+  let intent: BenefitIntent | undefined;
+  if (query.trim().length > 0 && explicitKeyword.length === 0) {
+    intent = await resolveIntent(query);
+    applyIntentToParams(params, intent);
+  }
+
+  const keyword = params.get('apiKeyword') ?? query;
   const fetchedAt = new Date().toISOString();
   const activeSources = getActiveBenefitSources();
   const plannedSources = getPlannedBenefitSources();
 
   const sourceResults = await Promise.all(
-    activeSources.map((source) => searchSource(req, source, keyword, fetchedAt)),
+    activeSources.map((source) => searchSource(origin, source, params, keyword, fetchedAt)),
   );
   const items = dedupeNormalizedBenefits(sourceResults.flatMap((result) => result.items))
     .sort((a, b) => b.confidence - a.confidence);
@@ -123,7 +160,8 @@ export async function GET(req: NextRequest) {
     plannedSources,
     totalCount: items.length,
     query,
-    apiKeyword,
+    apiKeyword: params.get('apiKeyword') ?? '',
+    intent,
     registry: BENEFIT_SOURCES,
   });
 }

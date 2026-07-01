@@ -514,6 +514,35 @@ Notion 기준으로 `WelfareList_DB` 설계가 존재합니다.
   - `npm run build` 통과 (10/10 페이지)
   - Node 기본 테스트 14/14 통과
 
+### 2026.07.01 Gemini AI intent 파싱 + 통합 검색 소스 레지스트리 확장
+
+방향: 자연어 검색 → AI intent 파싱 → 여러 데이터 소스 동시 검색 흐름을 완성하기 위해, Gemini API 를 서버 측에서 호출해 검색 조건을 자동 추출하고, 검색 라우터가 그 결과로 URL param 을 보정하도록 개선. 추가 공공/지자체 API 는 planned source descriptor 로 등록해 이후 어댑터 구현 시 단순 활성화만으로 확장 가능하도록.
+
+- `.env.example` 확장
+  - `GEMINI_API_KEY`, `GEMINI_MODEL` (기본 `gemini-2.5-flash`) 추가
+  - planned source 활성화용 키 5종 안내: `YOUTH_POLICY_API_KEY`, `EMPLOYMENT24_API_KEY`, `MOHW_HEALTH_API_KEY`, `SEOUL_OPEN_DATA_KEY`, `GOV24_API_KEY`
+- BenefitIntent 타입 및 순수 파서
+  - `src/types/benefit.ts` 에 `BenefitIntent` 추가 (keywords / lifeStage / interests / region / urgency / source / confidence)
+  - `src/lib/ai/intent.ts` 순수 유틸: `buildIntentPrompt`, `fallbackIntent` (규칙 기반), `parseGeminiIntent` (스키마 검증 후 fallback 로 백필)
+  - Node 테스트 8건 (`scripts/test-ai-intent.mjs`)
+- 서버 리졸버
+  - `src/lib/ai/resolver.ts` (server-only): Gemini `generateContent` 호출 + `responseSchema` 강제, 실패 시 fallbackIntent
+  - `app/api/ai/intent/route.ts`: `POST { query, profile? }` → `{ intent }` 반환
+- 통합 검색 라우터 개선
+  - `app/api/benefits/search/route.ts` 가 query 만 있고 apiKeyword 미지정 시 intent 파싱 후 URL param 보정 (ageGroup / situation / apiKeyword / sidoName / sigunguName)
+  - 응답에 `intent` 필드 포함해 FE 가 파싱 결과를 함께 표시할 수 있게
+- 소스 레지스트리 확장
+  - `BenefitSourceId` 유니온에 `youth-policy`, `employment24`, `mohw-health`, `housing-support`, `smes-support` 추가
+  - `BenefitSourceCategory` 유니온에 `youth`, `employment`, `health`, `housing`, `business` 추가
+  - descriptor 에 `envKey`, `docsUrl` 필드 추가 — UI 에 활성화 요건 안내 가능
+  - `getActiveBenefitSources` 가 env 값 존재 여부까지 체크해 자동으로 skip
+- 코덱스 코드 lint 정합화
+  - `useUserProfile`, `/onboarding`, `/search` 의 React 19 `set-state-in-effect` 규칙 위반 3건을 async IIFE 로 감싸 해결
+- 검증
+  - `npm run lint` 통과
+  - `npm run build` 통과 (15/15 페이지, `/api/ai/intent` 라우트 확인)
+  - Node 테스트 32/32 통과 (기존 24건 + AI intent 8건)
+
 ### 2026.07.01 인기 복지 집계 FE↔BE 통합
 
 방향: 이전에 만든 BE popular 도메인을 FE 카드 인터랙션과 연결. 카드 노출/클릭/저장 시 BE 카운터 증분, PopularList 는 BE 집계 결과를 우선 사용하고 실패/빈 결과 시 기존 `welfareInsights` fallback.

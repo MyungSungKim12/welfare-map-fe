@@ -64,7 +64,10 @@ export default function OnboardingPage() {
 
   useEffect(() => {
     if (!hydrated) return;
-    setForm(profile);
+    const sync = async () => {
+      setForm(profile);
+    };
+    sync();
   }, [hydrated, profile]);
 
   const updateField = <K extends keyof UserProfile>(key: K, value: UserProfile[K]) => {

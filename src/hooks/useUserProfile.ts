@@ -93,9 +93,12 @@ export function useUserProfile() {
   const [hydrated, setHydrated] = useState(false);
 
   useEffect(() => {
-    const stored = readUserProfile();
-    if (stored) setProfile(stored);
-    setHydrated(true);
+    const hydrate = async () => {
+      const stored = readUserProfile();
+      if (stored) setProfile(stored);
+      setHydrated(true);
+    };
+    hydrate();
   }, []);
 
   const save = useCallback((nextProfile: UserProfile) => {

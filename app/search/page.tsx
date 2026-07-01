@@ -112,7 +112,10 @@ export default function SearchPage() {
   const displayName = `${location.sidoName.replace('광역시', '').replace('특별시', '')} ${location.sigunguName}`;
 
   useEffect(() => {
-    setHistory(readSearchHistory());
+    const hydrate = async () => {
+      setHistory(readSearchHistory());
+    };
+    hydrate();
   }, []);
 
   const runSearch = (nextQuery: string) => {
