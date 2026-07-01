@@ -8,12 +8,13 @@ export const PopularWrapper = styled.section`
 `;
 
 export const PopularInner = styled.div`
-  width: min(1240px, 100%);
+  width: min(1320px, 100%);
   margin: 0 auto;
   padding: 1.4rem;
   border: 1px solid var(--color-line);
-  border-radius: var(--radius-lg);
-  background: var(--color-surface);
+  border-radius: 18px;
+  background: rgba(255, 255, 255, 0.74);
+  box-shadow: var(--shadow-sm);
 `;
 
 export const SectionHeader = styled.div`
@@ -24,7 +25,7 @@ export const SectionHeader = styled.div`
   margin-bottom: 1.2rem;
 
   span {
-    color: var(--color-primary);
+    color: var(--color-subtle);
     font-size: 1.2rem;
     font-weight: 800;
   }
@@ -48,7 +49,7 @@ export const TabGroup = styled.div`
   flex-wrap: wrap;
   padding: 0.35rem;
   border: 1px solid var(--color-line);
-  border-radius: var(--radius-md);
+  border-radius: 999px;
   background: var(--color-surface-muted);
 `;
 
@@ -58,7 +59,7 @@ export const TabBtn = styled.button<{ $active: boolean }>`
   align-items: center;
   gap: 0.5rem;
   padding: 0 1rem;
-  border-radius: var(--radius-sm);
+  border-radius: 999px;
   border: 1px solid ${({ $active }) => ($active ? 'var(--color-line-strong)' : 'transparent')};
   background: ${({ $active }) => ($active ? '#ffffff' : 'transparent')};
   color: ${({ $active }) => ($active ? 'var(--color-primary)' : 'var(--color-muted)')};
@@ -87,7 +88,7 @@ export const PopularCard = styled.article`
   padding: 1.25rem;
   background: var(--color-surface-subtle);
   border: 1px solid var(--color-line);
-  border-radius: var(--radius-md);
+  border-radius: 14px;
   color: inherit;
   text-decoration: none;
   transition: border-color 0.18s, background 0.18s;

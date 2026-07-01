@@ -8,12 +8,13 @@ export const LifeStageWrapper = styled.section`
 `;
 
 export const LifeStageInner = styled.div`
-  width: min(1240px, 100%);
+  width: min(1320px, 100%);
   margin: 0 auto;
   padding: 1.4rem;
   border: 1px solid var(--color-line);
-  border-radius: var(--radius-lg);
-  background: var(--color-surface);
+  border-radius: 18px;
+  background: rgba(255, 255, 255, 0.74);
+  box-shadow: var(--shadow-sm);
 `;
 
 export const SectionHeader = styled.div`
@@ -24,7 +25,7 @@ export const SectionHeader = styled.div`
   margin-bottom: 1.1rem;
 
   span {
-    color: var(--color-primary);
+    color: var(--color-subtle);
     font-size: 1.2rem;
     font-weight: 800;
   }
@@ -77,19 +78,19 @@ export const StageCard = styled.button`
   padding: 1.1rem;
   background: var(--color-surface-subtle);
   border: 1px solid var(--color-line);
-  border-radius: var(--radius-md);
+  border-radius: 14px;
   cursor: pointer;
   transition: border-color 0.18s, background 0.18s;
 
   .stage_icon {
     width: 38px;
     height: 38px;
-    border-radius: var(--radius-sm);
+    border-radius: 12px;
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    background: var(--color-info-soft);
-    color: var(--color-primary);
+    background: #f0eee8;
+    color: #111315;
   }
 
   .stage_label {

@@ -11,7 +11,7 @@ export const FilterWrapper = styled.div`
 export const LocationCard = styled.div`
   padding: 1.35rem;
   border-bottom: 1px solid var(--color-line);
-  background: var(--color-secondary);
+  background: #111315;
   color: #ffffff;
 
   .loc_label {
@@ -35,7 +35,7 @@ export const LocationCard = styled.div`
     align-items: center;
     padding: 0 1rem;
     border: 1px solid rgba(255, 255, 255, 0.22);
-    border-radius: var(--radius-sm);
+    border-radius: 999px;
     background: rgba(255, 255, 255, 0.08);
     color: #d8eee7;
     font-size: 1.22rem;
@@ -47,7 +47,7 @@ export const LocationCard = styled.div`
 export const FilterCard = styled.div`
   padding: 1.35rem;
   border-bottom: 1px solid var(--color-line);
-  background: var(--color-surface);
+  background: rgba(255, 255, 255, 0.86);
 
   &:last-child {
     border-bottom: 0;
@@ -84,7 +84,7 @@ export const ChipGrid = styled.div`
 export const Chip = styled.button<{ $active: boolean }>`
   min-height: 36px;
   padding: 0 0.95rem;
-  border-radius: var(--radius-sm);
+  border-radius: 999px;
   border: 1px solid ${({ $active }) => ($active ? 'rgba(36, 91, 79, 0.5)' : 'var(--color-line)')};
   background: ${({ $active }) => ($active ? 'var(--color-info-soft)' : '#ffffff')};
   color: ${({ $active }) => ($active ? 'var(--color-primary)' : 'var(--color-muted)')};
@@ -105,7 +105,7 @@ export const ResetButton = styled.button`
   justify-content: center;
   gap: 0.6rem;
   border: 1px solid var(--color-line-strong);
-  border-radius: var(--radius-sm);
+  border-radius: 999px;
   background: var(--color-surface-subtle);
   color: var(--color-secondary);
   font-size: 1.25rem;

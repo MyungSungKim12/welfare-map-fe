@@ -7,16 +7,18 @@ export const CardWrapper = styled.article<{ $expired: boolean }>`
   grid-template-columns: minmax(0, 1fr) auto;
   gap: 1.2rem;
   align-items: stretch;
-  padding: 1.35rem;
+  padding: 1.45rem;
   border: 1px solid var(--color-line);
-  border-radius: var(--radius-md);
-  background: var(--color-surface);
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.94);
   opacity: ${({ $expired }) => ($expired ? 0.64 : 1)};
-  transition: border-color 0.18s, background 0.18s;
+  transition: border-color 0.18s, background 0.18s, box-shadow 0.18s, transform 0.18s;
 
   &:hover {
-    border-color: rgba(36, 91, 79, 0.36);
-    background: var(--color-surface-subtle);
+    border-color: #cfc8bc;
+    background: #ffffff;
+    box-shadow: var(--shadow-sm);
+    transform: translateY(-1px);
   }
 
   .card_top {
@@ -91,7 +93,7 @@ export const Badge = styled.span<{ $type: 'region' | 'target' | 'period' }>`
   align-items: center;
   gap: 0.45rem;
   padding: 0 0.75rem;
-  border-radius: var(--radius-sm);
+  border-radius: 999px;
   border: 1px solid var(--color-line);
   color: ${({ $type }) =>
     $type === 'region' ? 'var(--color-primary)' :
@@ -116,7 +118,7 @@ export const CardRight = styled.div`
 export const SaveBtn = styled.button<{ $saved: boolean }>`
   width: 44px;
   height: 44px;
-  border-radius: var(--radius-md);
+  border-radius: 999px;
   border: 1px solid ${({ $saved }) => ($saved ? 'rgba(36, 91, 79, 0.5)' : 'var(--color-line)')};
   background: ${({ $saved }) => ($saved ? 'var(--color-info-soft)' : '#ffffff')};
   color: ${({ $saved }) => ($saved ? 'var(--color-primary)' : 'var(--color-muted)')};
@@ -133,8 +135,8 @@ export const DetailBtn = styled.a`
   justify-content: center;
   gap: 0.55rem;
   padding: 0 1rem;
-  border-radius: var(--radius-md);
-  background: var(--color-secondary);
+  border-radius: 999px;
+  background: #111315;
   color: #ffffff;
   font-size: 1.25rem;
   font-weight: 800;

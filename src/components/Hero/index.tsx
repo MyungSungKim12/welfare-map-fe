@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { ArrowRight, CalendarClock, CheckCircle2, ClipboardList, LocateFixed, Search, TableProperties } from 'lucide-react';
+import { ArrowRight, BrainCircuit, CalendarClock, CheckCircle2, ClipboardList, LocateFixed, Search, Sparkles } from 'lucide-react';
 import {
   HeroWrapper,
   HeroInner,
@@ -23,17 +23,29 @@ interface Props {
   location: LocationInfo;
   insights: WelfareInsights;
   isLoading: boolean;
+  promptSuggestions: string[];
+  hasProfile: boolean;
   onSearch: (keyword: string) => void;
   onDetectLocation: () => void;
 }
 
-export default function Hero({ location, insights, isLoading, onSearch, onDetectLocation }: Props) {
+export default function Hero({
+  location,
+  insights,
+  isLoading,
+  promptSuggestions,
+  hasProfile,
+  onSearch,
+  onDetectLocation,
+}: Props) {
   const [query, setQuery] = useState('');
   const urgentTitle = insights.urgentItems[0]?.title;
   const newTitle = insights.newItems[0]?.title;
 
   const handleSearch = () => {
-    onSearch(query.trim());
+    const trimmed = query.trim();
+    if (!trimmed) return;
+    onSearch(trimmed);
   };
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
@@ -45,14 +57,17 @@ export default function Hero({ location, insights, isLoading, onSearch, onDetect
       <HeroInner>
         <HeroCopy>
           <HeroEyebrow>
-            <TableProperties size={17} />
-            지역생활 대시보드
+            <BrainCircuit size={17} />
+            AI welfare concierge
           </HeroEyebrow>
           <HeroTitle>
-            {location.sidoName} {location.sigunguName} 기준, 확인할 복지와 주변 기관
+            말하듯 입력하면,
+            <br />
+            받을 수 있는 혜택만 추려드려요.
           </HeroTitle>
           <HeroSubtitle>
-            마감이 가까운 지원, 새로 갱신된 정책, 저장한 항목과 주변 복지기관을 한 화면에서 점검하세요.
+            {location.sidoName} {location.sigunguName} 기준으로 사용자 조건, 위치, 공공 API 결과를 조합해
+            복지 후보와 추천 근거를 함께 보여주는 AI 검색 워크스페이스입니다.
           </HeroSubtitle>
 
           <HeroActions>
@@ -60,7 +75,7 @@ export default function Hero({ location, insights, isLoading, onSearch, onDetect
               <Search size={20} />
               <input
                 type="text"
-                placeholder="청년, 주거, 건강검진, 출산지원처럼 검색"
+                placeholder="예: 강남구 사는 29살 청년인데 나한테 맞는 혜택 찾아줘"
                 value={query}
                 onChange={(e) => setQuery(e.target.value)}
                 onKeyDown={handleKeyDown}
@@ -72,6 +87,27 @@ export default function Hero({ location, insights, isLoading, onSearch, onDetect
               현재 위치로 갱신
             </HeroCTA>
           </HeroActions>
+
+          <div className="prompt-suggestions" aria-label="AI 추천 프롬프트">
+            <div className="prompt-head">
+              <Sparkles size={16} />
+              <span>{hasProfile ? '회원정보 기반 추천 질문' : '바로 써볼 수 있는 질문'}</span>
+            </div>
+            <div className="prompt-list">
+              {promptSuggestions.map((prompt) => (
+                <button
+                  key={prompt}
+                  type="button"
+                  onClick={() => {
+                    setQuery(prompt);
+                    onSearch(prompt);
+                  }}
+                >
+                  {prompt}
+                </button>
+              ))}
+            </div>
+          </div>
 
           <HeroStats>
             <div>
@@ -92,8 +128,8 @@ export default function Hero({ location, insights, isLoading, onSearch, onDetect
         <HeroPanel aria-label="오늘의 추천 요약">
           <div className="panel_header">
             <div>
-              <span>오늘 확인할 일</span>
-              <strong>{location.sigunguName} 작업 목록</strong>
+              <span>API orchestration</span>
+              <strong>{location.sigunguName} 추천 파이프라인</strong>
             </div>
           </div>
           <InsightCard $tone="urgent">

@@ -8,7 +8,7 @@ export const BannerWrapper = styled.section`
 `;
 
 export const BannerInner = styled.div`
-  width: min(1240px, 100%);
+  width: min(1320px, 100%);
   margin: 0 auto;
   display: grid;
   grid-template-columns: repeat(3, 1fr);
@@ -30,7 +30,8 @@ export const BannerCard = styled.article<{ $type: 'new' | 'urgent' | 'guide' }>`
   border-left: 4px solid ${({ $type }) =>
     $type === 'urgent' ? 'var(--color-danger)' :
     $type === 'new' ? 'var(--color-primary)' : 'var(--color-warn)'};
-  border-radius: var(--radius-md);
+  border-radius: 14px;
+  box-shadow: var(--shadow-sm);
 
   .banner_icon {
     width: 38px;

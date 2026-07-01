@@ -4,15 +4,15 @@ import styled from 'styled-components';
 
 export const HeroWrapper = styled.section`
   width: 100%;
-  padding: 3.4rem clamp(1.4rem, 3.2vw, 3.2rem) 2.4rem;
+  padding: 4.4rem clamp(1.4rem, 3.2vw, 3.4rem) 2.6rem;
 `;
 
 export const HeroInner = styled.div`
-  width: min(1240px, 100%);
+  width: min(1320px, 100%);
   margin: 0 auto;
   display: grid;
-  grid-template-columns: minmax(0, 1.08fr) minmax(340px, 0.72fr);
-  gap: 1.4rem;
+  grid-template-columns: minmax(0, 1.12fr) minmax(360px, 0.68fr);
+  gap: 1.6rem;
   align-items: stretch;
 
   @media (max-width: 960px) {
@@ -22,10 +22,58 @@ export const HeroInner = styled.div`
 
 export const HeroCopy = styled.div`
   min-width: 0;
-  padding: clamp(2.2rem, 4vw, 3.4rem);
+  padding: clamp(3rem, 5vw, 5.2rem);
   border: 1px solid var(--color-line);
-  border-radius: var(--radius-lg);
-  background: var(--color-surface);
+  border-radius: 18px;
+  background: rgba(255, 255, 255, 0.82);
+  box-shadow: var(--shadow-md);
+
+  .prompt-suggestions {
+    max-width: 820px;
+    margin: 0 0 1.8rem;
+    padding: 1.2rem;
+    border: 1px solid var(--color-line);
+    border-radius: 16px;
+    background: rgba(251, 250, 247, 0.82);
+  }
+
+  .prompt-head {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.55rem;
+    color: var(--color-subtle);
+    font-size: 1.16rem;
+    font-weight: 850;
+    margin-bottom: 0.9rem;
+  }
+
+  .prompt-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.8rem;
+  }
+
+  .prompt-list button {
+    min-height: 3.8rem;
+    padding: 0 1.2rem;
+    border: 1px solid #e2ddd3;
+    border-radius: 999px;
+    background: #ffffff;
+    color: #303741;
+    font-size: 1.22rem;
+    font-weight: 780;
+    cursor: pointer;
+    transition:
+      border-color 160ms ease,
+      background 160ms ease,
+      transform 160ms ease;
+  }
+
+  .prompt-list button:hover {
+    border-color: #111315;
+    background: #f6f4ef;
+    transform: translateY(-1px);
+  }
 `;
 
 export const HeroEyebrow = styled.div`
@@ -36,8 +84,8 @@ export const HeroEyebrow = styled.div`
   padding: 0 0.8rem;
   border: 1px solid var(--color-line);
   border-radius: 999px;
-  background: var(--color-surface-muted);
-  color: var(--color-primary);
+  background: #f0eee8;
+  color: #4f5661;
   font-size: 1.22rem;
   font-weight: 800;
   margin-bottom: 1.4rem;
@@ -46,19 +94,19 @@ export const HeroEyebrow = styled.div`
 export const HeroTitle = styled.h1`
   max-width: 760px;
   color: var(--color-ink);
-  font-size: clamp(2.8rem, 4.2vw, 4.6rem);
-  font-weight: 800;
-  line-height: 1.16;
+  font-size: clamp(4rem, 5.8vw, 7.2rem);
+  font-weight: 850;
+  line-height: 1.04;
   margin-bottom: 1.2rem;
 `;
 
 export const HeroSubtitle = styled.p`
-  max-width: 720px;
+  max-width: 760px;
   color: var(--color-muted);
   font-size: clamp(1.45rem, 1.7vw, 1.72rem);
   font-weight: 600;
   line-height: 1.7;
-  margin-bottom: 2rem;
+  margin-bottom: 2.4rem;
 `;
 
 export const HeroActions = styled.div`
@@ -66,19 +114,19 @@ export const HeroActions = styled.div`
   gap: 1rem;
   align-items: stretch;
   flex-wrap: wrap;
-  margin-bottom: 1.6rem;
+  margin-bottom: 1.4rem;
 `;
 
 export const HeroSearchBar = styled.div`
   flex: 1 1 420px;
-  min-height: 54px;
+  min-height: 64px;
   display: flex;
   align-items: center;
   gap: 0.9rem;
-  padding: 0.6rem 0.6rem 0.6rem 1.3rem;
-  background: var(--color-surface-subtle);
-  border: 1px solid var(--color-line-strong);
-  border-radius: var(--radius-md);
+  padding: 0.7rem 0.7rem 0.7rem 1.6rem;
+  background: #ffffff;
+  border: 1px solid #dcd6ca;
+  border-radius: 18px;
   color: var(--color-muted);
 
   input {
@@ -88,7 +136,7 @@ export const HeroSearchBar = styled.div`
     outline: none;
     background: transparent;
     color: var(--color-ink);
-    font-size: 1.48rem;
+    font-size: 1.55rem;
     font-weight: 700;
 
     &::placeholder {
@@ -98,11 +146,11 @@ export const HeroSearchBar = styled.div`
   }
 
   button {
-    min-height: 42px;
+    min-height: 48px;
     border: 0;
-    border-radius: var(--radius-sm);
+    border-radius: 14px;
     padding: 0 1.5rem;
-    background: var(--color-secondary);
+    background: #111315;
     color: #ffffff;
     font-size: 1.35rem;
     font-weight: 800;
@@ -127,16 +175,16 @@ export const HeroSearchBar = styled.div`
 `;
 
 export const HeroCTA = styled.button`
-  min-height: 54px;
+  min-height: 64px;
   display: inline-flex;
   align-items: center;
   justify-content: center;
   gap: 0.75rem;
   padding: 0 1.5rem;
   border: 1px solid var(--color-line-strong);
-  border-radius: var(--radius-md);
-  background: var(--color-surface);
-  color: var(--color-primary);
+  border-radius: 18px;
+  background: rgba(255, 255, 255, 0.72);
+  color: var(--color-ink);
   font-size: 1.42rem;
   font-weight: 800;
   cursor: pointer;
@@ -155,11 +203,11 @@ export const HeroStats = styled.div`
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 0;
-  max-width: 760px;
+  max-width: 820px;
   border: 1px solid var(--color-line);
-  border-radius: var(--radius-md);
+  border-radius: 16px;
   overflow: hidden;
-  background: var(--color-surface-subtle);
+  background: #fbfaf7;
 
   div {
     padding: 1.25rem 1.4rem;
@@ -173,7 +221,7 @@ export const HeroStats = styled.div`
   strong {
     display: block;
     font-size: 2rem;
-    color: var(--color-secondary);
+    color: var(--color-ink);
     margin-bottom: 0.3rem;
     line-height: 1;
   }
@@ -202,10 +250,11 @@ export const HeroPanel = styled.aside`
   display: flex;
   flex-direction: column;
   min-width: 0;
-  padding: 1.6rem;
+  padding: 1.8rem;
   border: 1px solid var(--color-line);
-  border-radius: var(--radius-lg);
-  background: var(--color-surface-subtle);
+  border-radius: 18px;
+  background: rgba(255, 255, 255, 0.7);
+  box-shadow: var(--shadow-sm);
 
   .panel_header {
     display: flex;
@@ -237,7 +286,7 @@ export const HeroPanel = styled.aside`
     gap: 0.65rem;
     margin-top: auto;
     border-radius: var(--radius-md);
-    background: var(--color-primary);
+    background: #111315;
     color: #ffffff;
     font-size: 1.42rem;
     font-weight: 800;

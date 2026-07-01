@@ -7,11 +7,11 @@ export const NavbarWrapper = styled.header`
   top: 0;
   z-index: 100;
   width: 100%;
-  min-height: 68px;
-  padding: 1rem clamp(1.4rem, 3.2vw, 3.2rem);
-  border-bottom: 1px solid var(--color-line);
-  background: rgba(247, 248, 245, 0.94);
-  backdrop-filter: blur(14px);
+  min-height: 76px;
+  padding: 1.2rem clamp(1.4rem, 3.2vw, 3.4rem);
+  border-bottom: 1px solid rgba(229, 225, 216, 0.72);
+  background: rgba(247, 247, 245, 0.78);
+  backdrop-filter: blur(22px);
   display: grid;
   grid-template-columns: auto minmax(180px, 1fr) auto;
   align-items: center;
@@ -34,26 +34,26 @@ export const Logo = styled.button`
   cursor: pointer;
 
   .logo_mark {
-    width: 36px;
-    height: 36px;
-    border-radius: var(--radius-sm);
+    width: 38px;
+    height: 38px;
+    border-radius: 12px;
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    background: var(--color-secondary);
+    background: #111315;
     color: #ffffff;
   }
 
   .logo_text {
-    font-size: 1.9rem;
-    font-weight: 800;
+    font-size: 2rem;
+    font-weight: 850;
   }
 
   .logo_badge {
     padding: 0.32rem 0.68rem;
     border-radius: 999px;
-    background: var(--color-surface-muted);
-    color: var(--color-primary);
+    background: #ede9df;
+    color: #5d6470;
     font-size: 1.1rem;
     font-weight: 800;
   }
@@ -73,9 +73,9 @@ export const LocationBadge = styled.button`
   max-width: 360px;
   padding: 0 1.2rem;
   border: 1px solid var(--color-line-strong);
-  border-radius: var(--radius-md);
-  background: var(--color-surface);
-  color: var(--color-secondary);
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.76);
+  color: var(--color-ink);
   font-size: 1.35rem;
   font-weight: 800;
   cursor: pointer;
@@ -106,9 +106,9 @@ export const NavRight = styled.div`
 export const IconButton = styled.button`
   width: 44px;
   height: 44px;
-  border-radius: var(--radius-md);
+  border-radius: 999px;
   border: 1px solid var(--color-line);
-  background: var(--color-surface);
+  background: rgba(255, 255, 255, 0.76);
   color: var(--color-secondary);
   display: inline-flex;
   align-items: center;
@@ -127,9 +127,9 @@ export const SavedLink = styled.a`
   position: relative;
   width: 44px;
   height: 44px;
-  border-radius: var(--radius-md);
+  border-radius: 999px;
   border: 1px solid var(--color-line);
-  background: var(--color-surface);
+  background: rgba(255, 255, 255, 0.76);
   color: var(--color-secondary);
   display: inline-flex;
   align-items: center;
@@ -168,8 +168,8 @@ export const LoginButton = styled.button`
   gap: 0.65rem;
   padding: 0 1.3rem;
   border: 1px solid var(--color-secondary);
-  border-radius: var(--radius-md);
-  background: var(--color-secondary);
+  border-radius: 999px;
+  background: #111315;
   color: #ffffff;
   font-size: 1.35rem;
   font-weight: 800;

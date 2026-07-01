@@ -20,8 +20,8 @@ export const ListWrapper = styled.div`
     gap: 0.9rem;
     padding: 1.4rem;
     border: 1px solid var(--color-line);
-    border-radius: var(--radius-md);
-    background: var(--color-surface);
+    border-radius: 14px;
+    background: rgba(255, 255, 255, 0.92);
   }
 
   .skeleton-card span {
@@ -50,7 +50,7 @@ export const ListWrapper = styled.div`
     min-width: 36px;
     padding: 0 0.85rem;
     border: 1px solid var(--color-line);
-    border-radius: var(--radius-sm);
+    border-radius: 999px;
     background: #ffffff;
     color: var(--color-muted);
     font-size: 1.22rem;
@@ -59,9 +59,9 @@ export const ListWrapper = styled.div`
   }
 
   .pagination button.active {
-    background: var(--color-secondary);
+    background: #111315;
     color: #ffffff;
-    border-color: var(--color-secondary);
+    border-color: #111315;
   }
 
   .pagination button:disabled {
@@ -102,7 +102,7 @@ export const ListHeader = styled.div`
     gap: 0.5rem;
     padding: 0 1rem;
     border: 1px solid var(--color-line);
-    border-radius: var(--radius-sm);
+    border-radius: 999px;
     background: #ffffff;
     color: var(--color-secondary);
     font-size: 1.22rem;
@@ -120,7 +120,7 @@ export const EmptyState = styled.div`
   gap: 0.75rem;
   padding: 1.8rem;
   background: var(--color-surface-subtle);
-  border-radius: var(--radius-md);
+  border-radius: 14px;
   border: 1px dashed var(--color-line-strong);
 
   .empty_title {
@@ -140,8 +140,8 @@ export const EmptyState = styled.div`
     min-height: 42px;
     padding: 0 1.25rem;
     border: 0;
-    border-radius: var(--radius-sm);
-    background: var(--color-primary);
+    border-radius: 999px;
+    background: #111315;
     color: #ffffff;
     font-size: 1.32rem;
     font-weight: 800;
