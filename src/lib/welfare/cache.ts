@@ -50,8 +50,9 @@ export function isWelfareCacheConfigured(env: NodeJS.ProcessEnv = process.env) {
 }
 
 export function toWelfareCacheRow(item: WelfareItem, source: WelfareCacheSource): WelfareCacheRow {
+  const cacheKey = `${source}:${item.id}`;
   return {
-    cache_key: `${source}:${item.id}`,
+    cache_key: cacheKey,
     service_id: item.id,
     source,
     serv_id: item.id,
@@ -73,13 +74,19 @@ export function toWelfareCacheRow(item: WelfareItem, source: WelfareCacheSource)
     apply_end_dd: item.applyEndDd || null,
     last_mod_ymd: item.lastModYmd || null,
     is_always: item.isAlways ?? false,
-    raw_data: item as unknown as Record<string, unknown>,
+    raw_data: {
+      ...item,
+      source,
+      cacheKey,
+    } as unknown as Record<string, unknown>,
   };
 }
 
 export function fromWelfareCacheRow(row: WelfareCacheRow): WelfareItem {
   return {
     id: row.service_id,
+    source: row.source,
+    cacheKey: row.cache_key,
     title: row.title,
     category: row.category,
     target: row.target,

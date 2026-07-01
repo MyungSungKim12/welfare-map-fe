@@ -76,12 +76,14 @@ test('toWelfareCacheRow stores source-qualified keys without changing service id
   assert.equal(row.cache_key, 'local:A100');
   assert.equal(row.service_id, 'A100');
   assert.equal(row.source, 'local');
+  assert.equal(row.raw_data.source, 'local');
+  assert.equal(row.raw_data.cacheKey, 'local:A100');
   assert.equal(row.title, '청년 월세 지원');
   assert.equal(row.ctpv_nm, '인천광역시');
   assert.equal(row.sgg_nm, '미추홀구');
 });
 
-test('fromWelfareCacheRow restores WelfareItem shape used by the UI', () => {
+test('fromWelfareCacheRow restores WelfareItem shape and popular cache identity used by the UI', () => {
   const restored = fromWelfareCacheRow({
     ...toWelfareCacheRow(item, 'national'),
     fetched_at: '2026-06-30T00:00:00.000Z',
@@ -92,4 +94,6 @@ test('fromWelfareCacheRow restores WelfareItem shape used by the UI', () => {
   assert.equal(restored.title, '청년 월세 지원');
   assert.equal(restored.region, '인천광역시 미추홀구');
   assert.equal(restored.isAlways, true);
+  assert.equal(restored.source, 'national');
+  assert.equal(restored.cacheKey, 'national:A100');
 });

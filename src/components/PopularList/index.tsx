@@ -1,6 +1,6 @@
 'use client';
 
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { ArrowUpRight, Clock3, Flame, Sparkles } from 'lucide-react';
 import {
   PopularWrapper,
@@ -12,28 +12,86 @@ import {
   PopularCard,
   StatusBadge,
 } from './PopularList.style';
-import { RankedWelfareItem, WelfareInsights } from '@/utils/welfareInsights';
+import { RankedWelfareItem, WelfareInsightTone, WelfareInsights } from '@/utils/welfareInsights';
+import { fetchPopularServices, type PopularServiceItem } from '@/lib/popular/client';
 
 interface Props {
   insights: WelfareInsights;
   isLoading: boolean;
 }
 
-const TABS = ['맞춤 후보', '마감 임박', '새로 등록'];
-
-function getTabItems(activeTab: number, insights: WelfareInsights) {
-  if (activeTab === 1) return insights.urgentItems;
-  if (activeTab === 2) return insights.newItems;
-  return insights.recommendedItems;
+interface PopularDisplay {
+  id: string;
+  title: string;
+  region: string;
+  target: string;
+  link: string;
+  insightTone: WelfareInsightTone;
+  insightBadge: string;
 }
 
-function getTargetText(item: RankedWelfareItem) {
+const TABS = ['맞춤 후보', '마감 임박', '새로 등록'];
+
+function rankedToDisplay(items: RankedWelfareItem[]): PopularDisplay[] {
+  return items.map((item) => ({
+    id: item.id,
+    title: item.title,
+    region: item.region || '전국',
+    target: item.target || '대상 확인 필요',
+    link: item.link || '',
+    insightTone: item.insightTone,
+    insightBadge: item.insightBadge,
+  }));
+}
+
+function popularToDisplay(items: PopularServiceItem[]): PopularDisplay[] {
+  return items
+    .filter((p) => p.title !== null && p.title.length > 0)
+    .map((p) => ({
+      id: p.cacheKey,
+      title: p.title as string,
+      region: p.region ?? '전국',
+      target: p.target ?? '대상 확인 필요',
+      link: p.link ?? '',
+      insightTone: 'default',
+      insightBadge: p.viewCount > 0 ? `조회 ${p.viewCount}회` : '인기',
+    }));
+}
+
+function getTabItems(
+  activeTab: number,
+  insights: WelfareInsights,
+  popular: PopularServiceItem[],
+): PopularDisplay[] {
+  if (activeTab === 1) return rankedToDisplay(insights.urgentItems);
+  if (activeTab === 2) return rankedToDisplay(insights.newItems);
+  const bePopular = popularToDisplay(popular);
+  if (bePopular.length > 0) return bePopular;
+  return rankedToDisplay(insights.recommendedItems);
+}
+
+function getTargetText(item: PopularDisplay) {
   return [item.region || '전국', item.target || '대상 확인 필요'].filter(Boolean).join(' · ');
 }
 
 export default function PopularList({ insights, isLoading }: Props) {
   const [activeTab, setActiveTab] = useState(0);
-  const items = useMemo(() => getTabItems(activeTab, insights).slice(0, 5), [activeTab, insights]);
+  const [popular, setPopular] = useState<PopularServiceItem[]>([]);
+
+  useEffect(() => {
+    let cancelled = false;
+    const load = async () => {
+      const items = await fetchPopularServices(10);
+      if (!cancelled) setPopular(items);
+    };
+    load();
+    return () => { cancelled = true; };
+  }, []);
+
+  const items = useMemo(
+    () => getTabItems(activeTab, insights, popular).slice(0, 5),
+    [activeTab, insights, popular],
+  );
 
   return (
     <PopularWrapper>

@@ -31,6 +31,8 @@ function parseNationalXml(xml: string): WelfareItem[] {
 
     items.push({
       id,
+      source: 'national',
+      cacheKey: `national:${id}`,
       title: get('servNm'),
       category: get('lifeNmArray') || get('intrsThemaNmArray') || '기타',
       target: get('trgterIndvdlNmArray') || '전체',

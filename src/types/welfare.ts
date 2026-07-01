@@ -16,6 +16,8 @@ export interface FilterType {
 
 export interface WelfareItem {
   id:          string;
+  source?:     'local' | 'national';
+  cacheKey?:   string;
   title:       string;
   category:    string;
   target:      string;

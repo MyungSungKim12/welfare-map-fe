@@ -32,6 +32,8 @@ function parseLocalXml(xml: string): WelfareItem[] {
 
     items.push({
       id,
+      source: 'local',
+      cacheKey: `local:${id}`,
       title: get('servNm'),
       category: get('intrsThemaNmArray') || get('srvPvsnNm') || '기타',
       target: get('trgterIndvdlNmArray') || '전체',

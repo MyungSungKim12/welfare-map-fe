@@ -1,10 +1,12 @@
 'use client';
 
+import { useEffect, useRef } from 'react';
 import { RefreshCw } from 'lucide-react';
 import WelfareCard from '@/components/WelfareCard';
 import { ListWrapper, ListHeader, EmptyState } from './WelfareList.style';
 import { UseWelfareDataReturn } from '@/hooks/useWelfareData';
 import type { WelfareItem } from '@/types/welfare';
+import { trackPopularInteraction } from '@/lib/popular/tracking';
 
 interface Props {
   data: UseWelfareDataReturn;
@@ -50,6 +52,18 @@ export default function WelfareList({ data, savedIds, onToggleSave }: Props) {
   const { items, allItems, isLoading, error, page, totalPages, setPage, refetch } = data;
   const startIndex = allItems.length === 0 ? 0 : (page - 1) * 5 + 1;
   const endIndex = Math.min(page * 5, allItems.length);
+
+  const viewedRef = useRef<Set<string>>(new Set());
+
+  useEffect(() => {
+    if (isLoading || error) return;
+    for (const item of items) {
+      if (item.cacheKey && !viewedRef.current.has(item.cacheKey)) {
+        viewedRef.current.add(item.cacheKey);
+        trackPopularInteraction(item.cacheKey, 'view');
+      }
+    }
+  }, [items, isLoading, error]);
 
   return (
     <ListWrapper>

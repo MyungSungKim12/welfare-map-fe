@@ -2,6 +2,7 @@
 
 import { Bookmark, CalendarClock, ExternalLink, MapPin, UsersRound } from 'lucide-react';
 import { WelfareItem } from '@/types/welfare';
+import { trackPopularInteraction } from '@/lib/popular/tracking';
 import {
   CardWrapper,
   CardLeft,
@@ -75,7 +76,10 @@ export default function WelfareCard({ welfare, isSaved, onSave }: Props) {
 
       <CardRight>
         <SaveBtn
-          onClick={() => onSave(welfare.id)}
+          onClick={() => {
+            if (!isSaved) trackPopularInteraction(welfare.cacheKey, 'save');
+            onSave(welfare.id);
+          }}
           title={isSaved ? '저장 취소' : '관심 복지 저장'}
           type="button"
           $saved={isSaved}
@@ -88,6 +92,7 @@ export default function WelfareCard({ welfare, isSaved, onSave }: Props) {
           target="_blank"
           rel="noopener noreferrer"
           title="상세 보기"
+          onClick={() => trackPopularInteraction(welfare.cacheKey, 'click')}
         >
           <ExternalLink size={18} />
           상세

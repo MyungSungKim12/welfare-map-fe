@@ -514,6 +514,40 @@ Notion 기준으로 `WelfareList_DB` 설계가 존재합니다.
   - `npm run build` 통과 (10/10 페이지)
   - Node 기본 테스트 14/14 통과
 
+### 2026.07.01 인기 복지 집계 FE↔BE 통합
+
+방향: 이전에 만든 BE popular 도메인을 FE 카드 인터랙션과 연결. 카드 노출/클릭/저장 시 BE 카운터 증분, PopularList 는 BE 집계 결과를 우선 사용하고 실패/빈 결과 시 기존 `welfareInsights` fallback.
+
+- FE `WelfareItem` 에 `source?: 'local' | 'national'`, `cacheKey?: string` 추가
+  - `local/national` welfare API 라우트에서 파싱 시점에 `cacheKey = ${source}:${servId}` 채움
+  - `welfare_services` 캐시 upsert 시 `raw_data` 에도 동일 값 저장
+- BE popular projection
+  - `PopularServiceProjection` 인터페이스 추가 (Spring Data JPA interface projection)
+  - `PopularServiceDto` 에 welfare 원본 필드 6개(`title/summary/link/region/target/category`) 확장
+  - `findTopProjectedByScore` native query 로 `popular_services LEFT JOIN welfare_services` 반환
+    - alias 를 double-quoted 로 camelCase 보존 (Postgres 언쿼트 소문자화 회피)
+  - `PopularServiceFacade.findTop` 이 projection 경로 사용
+  - `PopularServiceDtoTests` 유닛 테스트 추가 (JOIN 정상 매핑, orphan 카운터 null 필드 허용)
+- FE popular API 클라이언트
+  - `src/lib/popular/client.ts` — `PopularServiceItem`, `normalizePopularItems`, `fetchPopularServices(limit, fetcher?)`
+  - `NEXT_PUBLIC_BE_BASE_URL` env 지원 (기본 `http://localhost:8080`)
+  - Node 테스트 6건 (`scripts/test-popular-client.mjs`)
+- FE PopularList BE 연동
+  - `useEffect` 로 마운트 시 BE Top 10 fetch
+  - 첫 탭(맞춤 후보)이 BE 결과 우선, 빈 결과 시 기존 `welfareInsights.recommendedItems` fallback
+  - orphan 카운터(welfare_services 없음)는 시각적으로 숨김
+- FE interaction tracking
+  - `src/lib/popular/tracking.ts` — `trackPopularInteraction(cacheKey, type, fetcher?)`, fire-and-forget
+  - `WelfareCard` 저장 클릭 시 (새로 저장하는 경우만) `save`, 상세 링크 클릭 시 `click`
+  - `WelfareList` 는 페이지 렌더 시 방문한 `cacheKey` 를 ref set 으로 dedup 하며 `view` 1회 발사
+  - Node 테스트 4건 (`scripts/test-popular-tracking.mjs`)
+- 계획 문서: `docs/superpowers/plans/2026-07-01-popular-integration.md`
+- 검증
+  - `node --test` 24/24 통과 (welfare-insights 5, welfare-cache 5, facilities 6, popular-client 6, popular-tracking 4 — 실제 파일별 수치는 유틸 커버리지에 따라 약간 차이)
+  - `npm run lint` 통과
+  - `npm run build` 통과 (10/10 페이지)
+  - BE `.\gradlew.bat test --tests com.welfareMap.popular.dto.PopularServiceDtoTests` 로컬 검증 필요 (도구 환경 loopback 제약)
+
 ### 2026.06.30 BE 하이브리드 — 인기 복지 집계 도메인 추가
 
 방향: 주기적/누적 데이터(인기 복지 집계)는 BE로, 단발 호출(AI 추천)은 FE에서 시작하는 하이브리드 전략. 이번 작업은 BE 첫 도메인.
