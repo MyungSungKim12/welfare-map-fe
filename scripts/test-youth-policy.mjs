@@ -20,7 +20,6 @@ function loadYouthPolicyModule() {
     fileName: filename,
   });
 
-  // fake @/lib/benefits/normalize resolution
   const fakeModules = new Map();
   fakeModules.set('@/lib/benefits/normalize', {
     normalizeTextBenefit: (input) => ({ ...input, sourceId: input.source.id }),
@@ -36,28 +35,22 @@ function loadYouthPolicyModule() {
   return cjsModule.exports;
 }
 
-const { parseYouthPolicyXml, shouldSearchYouthPolicy } = loadYouthPolicyModule();
+const {
+  extractPolicyRows,
+  normalizeYouthRow,
+  shouldSearchYouthPolicy,
+} = loadYouthPolicyModule();
 
 test('shouldSearchYouthPolicy triggers on youth lifeStage even without keywords', () => {
   assert.equal(shouldSearchYouthPolicy('', {
-    rawQuery: '',
-    keywords: [],
-    interests: [],
-    urgency: 'normal',
-    source: 'ai',
-    confidence: 0.5,
+    rawQuery: '', keywords: [], interests: [], urgency: 'normal', source: 'ai', confidence: 0.5,
     lifeStage: 'youth',
   }), true);
 });
 
 test('shouldSearchYouthPolicy triggers on newlywed lifeStage', () => {
   assert.equal(shouldSearchYouthPolicy('', {
-    rawQuery: '',
-    keywords: [],
-    interests: [],
-    urgency: 'normal',
-    source: 'ai',
-    confidence: 0.5,
+    rawQuery: '', keywords: [], interests: [], urgency: 'normal', source: 'ai', confidence: 0.5,
     lifeStage: 'newlywed',
   }), true);
 });
@@ -72,50 +65,78 @@ test('shouldSearchYouthPolicy skips when no signals match', () => {
   assert.equal(shouldSearchYouthPolicy('고령자 요양 지원'), false);
 });
 
-test('parseYouthPolicyXml extracts required fields from XML', () => {
-  const xml = `
-    <youthPolicyList>
-      <youthPolicy>
-        <polyBizSjnm><![CDATA[청년 월세 지원]]></polyBizSjnm>
-        <polyItcnCn>만 19-34세 청년에게 월세 20만원 지원</polyItcnCn>
-        <sporCn>월 20만원, 최대 12개월</sporCn>
-        <pcInInfo>만 19-34세, 무주택자</pcInInfo>
-        <ageInfo>19-34세</ageInfo>
-        <rqutPrdCn>2026-07-01 ~ 2026-08-31</rqutPrdCn>
-        <mngtMxrsCd>서울</mngtMxrsCd>
-        <rfcSiteUrla1>https://gov.kr/x</rfcSiteUrla1>
-        <aplyUrlAddr>https://gov.kr/apply</aplyUrlAddr>
-      </youthPolicy>
-      <youthPolicy>
-        <polyBizSjnm>청년 취업지원</polyBizSjnm>
-      </youthPolicy>
-    </youthPolicyList>
-  `;
-  const rows = parseYouthPolicyXml(xml);
+test('extractPolicyRows finds list under result.youthPolicyList', () => {
+  const envelope = {
+    resultCode: 0,
+    result: {
+      pagging: { totCount: 2 },
+      youthPolicyList: [{ plcyNm: 'A' }, { plcyNm: 'B' }],
+    },
+  };
+  const rows = extractPolicyRows(envelope);
   assert.equal(rows.length, 2);
-  assert.equal(rows[0].polyBizSjnm, '청년 월세 지원');
-  assert.equal(rows[0].pcInInfo, '만 19-34세, 무주택자');
-  assert.equal(rows[0].mngtMxrsCd, '서울');
-  assert.equal(rows[0].aplyUrlAddr, 'https://gov.kr/apply');
-  assert.equal(rows[1].polyBizSjnm, '청년 취업지원');
-  assert.equal(rows[1].polyItcnCn, '');
+  assert.equal(rows[0].plcyNm, 'A');
 });
 
-test('parseYouthPolicyXml decodes HTML entities', () => {
-  const xml = `
-    <youthPolicyList>
-      <youthPolicy>
-        <polyBizSjnm>주거 &amp; 생활 지원</polyBizSjnm>
-        <polyItcnCn>&lt;청년&gt; 지원 &nbsp;프로그램</polyItcnCn>
-      </youthPolicy>
-    </youthPolicyList>
-  `;
-  const rows = parseYouthPolicyXml(xml);
-  assert.equal(rows[0].polyBizSjnm, '주거 & 생활 지원');
-  assert.equal(rows[0].polyItcnCn, '<청년> 지원 프로그램');
+test('extractPolicyRows falls back to root-level youthPolicyList', () => {
+  const envelope = { youthPolicyList: [{ plcyNm: 'X' }] };
+  const rows = extractPolicyRows(envelope);
+  assert.equal(rows.length, 1);
+  assert.equal(rows[0].plcyNm, 'X');
 });
 
-test('parseYouthPolicyXml returns empty array for XML with no policy blocks', () => {
-  assert.equal(parseYouthPolicyXml('<youthPolicyList></youthPolicyList>').length, 0);
-  assert.equal(parseYouthPolicyXml('not xml at all').length, 0);
+test('extractPolicyRows accepts result being a plain array (older format)', () => {
+  const envelope = { result: [{ plcyNm: 'legacy' }] };
+  const rows = extractPolicyRows(envelope);
+  assert.equal(rows.length, 1);
+});
+
+test('extractPolicyRows returns empty for missing/invalid envelope', () => {
+  assert.equal(extractPolicyRows(null).length, 0);
+  assert.equal(extractPolicyRows({ result: {} }).length, 0);
+  assert.equal(extractPolicyRows('not object').length, 0);
+});
+
+test('normalizeYouthRow maps new-version JSON fields', () => {
+  const row = normalizeYouthRow({
+    plcyNo: 'R2026-A',
+    plcyNm: '청년 월세 지원',
+    plcyExplnCn: '만 19~34세 무주택 청년에게 월세 지원',
+    plcySprtCn: '월 20만원, 최대 12개월',
+    aplyBgngYmd: '20260101',
+    aplyEndYmd: '20261231',
+    sprvsnInsttCodeNm: '서울특별시',
+    rgtrHghrkInsttCodeNm: '서울특별시',
+    lclsfNm: '주거',
+    mclsfNm: '임대주택',
+    plcyKywdNm: '청년,월세,임대',
+    sprtTrgtMinAge: '19',
+    sprtTrgtMaxAge: '34',
+    refUrlAddr1: 'https://gov.kr/x',
+    aplyUrlAddr: 'https://gov.kr/apply',
+  });
+
+  assert.equal(row.plcyNm, '청년 월세 지원');
+  assert.equal(row.rgtrHghrkInsttCodeNm, '서울특별시');
+  assert.equal(row.lclsfNm, '주거');
+  assert.equal(row.aplyUrlAddr, 'https://gov.kr/apply');
+});
+
+test('normalizeYouthRow falls back to legacy field names', () => {
+  const row = normalizeYouthRow({
+    polyBizSjnm: '청년 취업지원',
+    polyItcnCn: '취업 프로그램',
+    sporCn: '취업 인센티브 제공',
+    rfcSiteUrla1: 'https://legacy.gov.kr',
+  });
+  assert.equal(row.plcyNm, '청년 취업지원');
+  assert.equal(row.plcyExplnCn, '취업 프로그램');
+  assert.equal(row.plcySprtCn, '취업 인센티브 제공');
+  assert.equal(row.refUrlAddr1, 'https://legacy.gov.kr');
+});
+
+test('normalizeYouthRow returns empty strings for missing fields', () => {
+  const row = normalizeYouthRow({});
+  assert.equal(row.plcyNm, '');
+  assert.equal(row.aplyUrlAddr, '');
 });

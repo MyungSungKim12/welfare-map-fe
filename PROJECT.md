@@ -586,6 +586,23 @@ Notion 기준으로 `WelfareList_DB` 설계가 존재합니다.
   - `npm run build` 통과 (15/15 페이지, `/api/ai/intent` 라우트 확인)
   - Node 테스트 32/32 통과 (기존 24건 + AI intent 8건)
 
+### 2026.07.02 청년정책 어댑터 신버전 API (getPlcy JSON) 로 재작성
+
+방향: 사용자가 온통청년 API 활용신청 완료. 승인 대기 중이지만, 실제 신버전 endpoint 는 이전에 가정했던 `youthPlcyList.do` XML 이 아니라 `getPlcy` JSON. 승인 즉시 활성화되도록 어댑터를 신버전 스펙에 맞춰 재작성.
+
+- Endpoint: `https://www.youthcenter.go.kr/opi/youthPlcyList.do` (XML) → `https://www.youthcenter.go.kr/go/ythip/getPlcy` (JSON)
+- 파라미터: `openApiVlak/display/pageIndex/query` → `apiKeyNm/pageType/rtnType/pageNum/pageSize/plcyKywdNm/lclsfNm/rgtrHghrkInsttCodeNm`
+- 응답 파싱
+  - `parseYouthPolicyXml` (XML regex) → `extractPolicyRows` (JSON envelope 다양한 위치 대응) + `normalizeYouthRow`
+  - 필드명은 후보 리스트로 pick — 신버전(`plcyNm/plcyExplnCn/plcySprtCn/...`) 우선, 구버전(`polyBizSjnm/polyItcnCn/...`) 도 호환
+- intent 매핑
+  - `interests[0]` → `lclsfNm` (주거/일자리/교육/복지문화) 대분류 필터
+  - `region.sido` → `rgtrHghrkInsttCodeNm` (상위기관명, 예: 서울특별시)
+  - `keyword` → `plcyKywdNm`
+- Node 테스트 재작성: `scripts/test-youth-policy.mjs` 11건 (should-search 4 + extract 4 + normalize 3)
+- 검증: lint / build 통과 / 전체 Node 테스트 51/51 통과
+- 사용자 액션: 승인 완료 시 `.env.local` 의 `YOUTH_POLICY_API_KEY=` 실제 값 교체 → 자동 활성
+
 ### 2026.07.02 AI 웹 검색 grounding 소스 활성화 + 청년정책 어댑터 추가
 
 방향: 사용자가 요청한 "폭넓은 검색" 을 위해 Gemini google_search grounding 을 정식 검색 소스로 활성화. 동시에 청년정책 어댑터를 코드로 준비해 API 키 확보 시 즉시 활성화 가능한 상태로.
