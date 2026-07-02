@@ -12,7 +12,14 @@ const GEMINI_ENDPOINT = 'https://generativelanguage.googleapis.com/v1beta/models
 interface GeminiResponse {
   candidates?: Array<{
     content?: { parts?: Array<{ text?: string }> };
+    finishReason?: string;
   }>;
+  usageMetadata?: {
+    promptTokenCount?: number;
+    candidatesTokenCount?: number;
+    thoughtsTokenCount?: number;
+    totalTokenCount?: number;
+  };
 }
 
 async function callGeminiAnswer(prompt: string): Promise<string | null> {
@@ -26,7 +33,10 @@ async function callGeminiAnswer(prompt: string): Promise<string | null> {
     contents: [{ parts: [{ text: prompt }] }],
     generationConfig: {
       temperature: 0.35,
-      maxOutputTokens: 800,
+      maxOutputTokens: 2048,
+      // Gemini 2.5 시리즈의 "thinking" 토큰이 짧은 답변 태스크에서
+      // output 예산을 다 먹어 응답이 잘리는 문제 방지. 2.0/1.5 모델은 무시.
+      thinkingConfig: { thinkingBudget: 0 },
     },
   };
 
@@ -38,10 +48,16 @@ async function callGeminiAnswer(prompt: string): Promise<string | null> {
       cache: 'no-store',
     });
     if (!response.ok) {
-      console.error('[gemini answer] status', response.status);
+      const errText = await response.text().catch(() => '');
+      console.error('[gemini answer] status', response.status, errText.slice(0, 200));
       return null;
     }
     const data = (await response.json()) as GeminiResponse;
+    const finish = data.candidates?.[0]?.finishReason;
+    const usage = data.usageMetadata;
+    if (finish && finish !== 'STOP') {
+      console.warn('[gemini answer] finishReason=', finish, 'usage=', usage);
+    }
     const text = data.candidates?.[0]?.content?.parts?.map((p) => p.text ?? '').join('') ?? '';
     return text.trim() || null;
   } catch (error) {
