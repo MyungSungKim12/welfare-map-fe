@@ -543,6 +543,35 @@ Notion 기준으로 `WelfareList_DB` 설계가 존재합니다.
   - `npm run build` 통과 (15/15 페이지, `/api/ai/intent` 라우트 확인)
   - Node 테스트 32/32 통과 (기존 24건 + AI intent 8건)
 
+### 2026.07.02 지역 오픈데이터 공통 커넥터 추가
+
+방향: 서울 열린데이터광장 API를 개별 API별로 하드코딩하지 않고, 전국 확장 가능한 지역 오픈데이터 connector 패턴의 첫 구현으로 추가. 최종 목표는 서울 한정이 아니라 사용자 현재 위치 기반으로 각 지역의 복지/프로그램/시설/FAQ 데이터를 통합 검색하는 구조.
+
+- `src/lib/benefits/seoulOpenData.ts`
+  - 서울 OpenAPI 공통 호출 패턴 구현: `http://openapi.seoul.go.kr:8088/{KEY}/json/{SERVICE_NAME}/1/100`
+  - `SEOUL_OPEN_DATA_SERVICES` JSON 설정 지원
+  - 개별 env 서비스명 설정 지원
+    - `SEOUL_ONE_PERSON_PROGRAM_SERVICE_NAME`
+    - `SEOUL_COMPANION_RESTAURANT_SERVICE_NAME`
+    - `SEOUL_DASAN_FAQ_SERVICE_NAME`
+  - 서비스 기능군
+    - `benefit-program`: 1인가구/청년/중장년/고령자 참여 프로그램형
+    - `facility-location`: 취약계층/생활시설 위치형
+    - `facility-reservation`: 시설/체육/대관 예약형 후속 확장용
+    - `faq`: 다산콜센터 FAQ/상담형
+  - Gemini intent / keyword / 현재 지역을 보고 호출할 서비스군을 필터링
+- `src/lib/benefits/normalize.ts`
+  - 행 기반/텍스트 기반 API 응답을 `NormalizedBenefit`으로 바꾸는 `normalizeTextBenefit` 추가
+- `src/lib/benefits/sources.ts`
+  - `seoul-open-data`를 active source로 전환
+  - `SEOUL_OPEN_DATA_KEY`가 없으면 planned 목록에 남도록 `getPlannedBenefitSources` 보정
+- `app/api/benefits/search/route.ts`
+  - `seoul-open-data` source일 때 `searchSeoulOpenDataSource`를 호출하도록 연결
+  - 기존 복지로 local/national connector와 동일한 `BenefitSourceResult`로 병합
+- 운영 메모
+  - 서울 API의 실제 `서비스명`은 열린데이터광장 API 상세 화면의 영문/서비스명을 env에 넣어야 활성화됨
+  - API 수가 늘어나도 코드를 늘리는 방식이 아니라 registry 설정 + mapper 기능군을 추가하는 방식으로 확장
+
 ### 2026.07.01 인기 복지 집계 FE↔BE 통합
 
 방향: 이전에 만든 BE popular 도메인을 FE 카드 인터랙션과 연결. 카드 노출/클릭/저장 시 BE 카운터 증분, PopularList 는 BE 집계 결과를 우선 사용하고 실패/빈 결과 시 기존 `welfareInsights` fallback.
@@ -654,3 +683,49 @@ Notion 기준으로 `WelfareList_DB` 설계가 존재합니다.
 - 로컬 `PROJECT.md`는 코드 저장소에서 프로젝트 상태를 빠르게 파악하기 위한 기준 문서로 사용합니다.
 - Notion에는 기획/작업 히스토리/트러블슈팅을 상세 기록하고, Git에는 구현과 함께 이 문서를 최신 상태로 유지합니다.
 - 앞으로 주요 작업을 시작하거나 완료할 때 `PROJECT.md`의 작업 우선순위, 히스토리, 결정 사항을 함께 업데이트합니다.
+
+---
+
+## 2026-07-02 업데이트: 서울 열린데이터광장 API 3종 연결 기준 정리
+
+이번 작업에서는 사용자가 제공한 서울 열린데이터광장 API 3개를 실제 통합 검색 커넥터의 기본 preset으로 반영했다.
+
+- 공통 인증키: `SEOUL_OPEN_DATA_KEY`
+- 1인가구 참여프로그램: `SEOUL_ONE_PERSON_PROGRAM_SERVICE_NAME=tbPartcptn`
+- 강동구 어르신 복지시설: `SEOUL_ELDERLY_FACILITY_SERVICE_NAME=GdTnBbs3`
+- 은평구 시설대관 공공서비스예약: `SEOUL_PUBLIC_RESERVATION_SERVICE_NAME=EPListPublicReservationInstitution`
+
+구현 내용:
+
+- `src/lib/benefits/seoulOpenData.ts`의 깨진 한글 preset을 실제 API 3종 기준으로 교체
+- 서울 25개 자치구명이 검색어/intent에 포함되어도 서울 OpenData 검색 대상으로 판단하도록 개선
+- 1인가구 프로그램, 어르신 복지시설, 시설대관 예약 API별 주요 row 필드 매핑 추가
+- `PARTCPTN_SJ`, `FCLT_NM`, `SVCNM`, `ATDRC_NM`, `DONG`, `AREANM`, `TRGET_INFO`, `USETGTINFO`, `RCEPT_MTH_LINK`, `SVCURL` 등 실제 응답 필드 반영
+- `CN`처럼 HTML/이미지/base64가 섞일 수 있는 필드는 정리 후 요약에 사용
+- `.env.example`에 서울 OpenData 서비스명 예시 추가
+
+운영 메모:
+
+- 서울 열린데이터광장 인증키 1개를 쓰더라도 API별 서비스명은 각각 env로 지정한다.
+- 향후 API가 늘어나면 `SEOUL_OPEN_DATA_SERVICES` JSON registry 방식으로 추가하거나, preset을 기능군별로 확장한다.
+- 최종 목표는 서울 한정이 아니라 전국 위치 기반 검색이므로, 서울 OpenData 커넥터는 지역 오픈데이터 커넥터 패턴의 첫 샘플로 본다.
+
+---
+
+## 2026-07-02 업데이트: 좌측 메뉴 화면 확장 및 검색 결과 집중 모드
+
+이번 작업에서는 `/search` 화면의 좌측 공통 메뉴를 실제 서비스 화면처럼 사용할 수 있도록 확장하고, AI 검색 submit 이후에는 검색 입력 중심 화면이 계속 남지 않도록 결과 전용 화면으로 전환했다.
+
+- `AI 검색`: 검색 전에는 프롬프트/검색창/요약 카드 표시, 검색 후에는 결과 집중 화면으로 전환
+- `내 맞춤 혜택`: 최근 검색 결과가 있으면 실제 후보를 요약하고, 없으면 청년정책/고용24/서울 OpenData 확장형 추천 카드 표시
+- `지도/주변기관`: 지도 메뉴 전용 와이어프레임과 주변기관 유형 목록 추가
+- `저장한 혜택`: localStorage 북마크 목록을 메뉴 화면에서 확인/해제 가능
+- `검색 기록`: 최근 질문을 다시 실행할 수 있는 메뉴 화면 추가
+- `마이페이지`: 온보딩에서 저장한 사용자 조건 요약과 프로필 수정 진입 연결
+- 검색 결과 모드: submit 이후 우측 패널 의존 UI를 접고, 중앙 화면 전체를 결과 리스트/출처/AI intent 요약 중심으로 구성
+
+검증:
+
+- `npm run build` 통과
+- `npm run lint` 통과
+- `http://localhost:3000/search` 200 응답 확인

@@ -255,6 +255,26 @@ welfare-map-fe/
 
 ## 7. 작업 히스토리
 
+### 2026-07-02 지역 오픈데이터 공통 커넥터 추가
+
+- 최종 목표를 `서울 한정`이 아니라 `전국 위치 기반 복지/혜택/생활지원 통합 검색`으로 두고, 서울 열린데이터광장은 첫 번째 지역 오픈데이터 샘플로 연결했다.
+- `서울 API 수백 개를 개별 구현`하지 않기 위해 공통 클라이언트 + 서비스 registry + mapper 구조를 추가했다.
+  - `src/lib/benefits/seoulOpenData.ts`
+  - 서울 OpenAPI 공통 URL 패턴 처리
+  - `SEOUL_OPEN_DATA_SERVICES` JSON 설정 지원
+  - 개별 env 서비스명 설정 지원
+    - `SEOUL_ONE_PERSON_PROGRAM_SERVICE_NAME`
+    - `SEOUL_COMPANION_RESTAURANT_SERVICE_NAME`
+    - `SEOUL_DASAN_FAQ_SERVICE_NAME`
+- 우선 연결 대상 기능군을 3개로 제한했다.
+  - 1인가구/참여 프로그램형
+  - 취약계층/생활시설 위치형
+  - 상담/FAQ형
+- `seoul-open-data` 소스를 `active`로 전환하되, `SEOUL_OPEN_DATA_KEY`가 없으면 planned 목록에 남도록 처리했다.
+- 통합 검색 라우터가 Gemini intent와 현재 위치 조건을 보고 서울 오픈데이터 호출 여부를 결정하도록 연결했다.
+- 일반 텍스트/행 기반 API 응답을 `NormalizedBenefit`으로 변환하는 `normalizeTextBenefit` 유틸을 추가했다.
+- 추후 경기/인천/부산 등은 같은 패턴으로 `regionalOpenData` registry를 확장하면 된다.
+
 ### 2026-07-01 통합 혜택 검색 라우터 기반 추가
 
 - 기존 `/api/welfare/local`, `/api/welfare/national`을 직접 병합하던 구조에서 확장 가능한 통합 혜택 검색 구조로 전환했다.
@@ -376,3 +396,35 @@ welfare-map-fe/
 - `app/globals.css`에 랜딩/로그인 전용 반응형 스타일 추가
 - 검증 참고
   - `npm run lint`는 실행 승인 거절로 미검증
+
+---
+
+## 2026-07-02 업데이트: 서울 열린데이터광장 API 3종 preset 확정
+
+서울 열린데이터광장 연동은 일단 사용자가 제공한 API 3개를 기준으로 실제 검색 결과에 붙였다.
+
+환경변수:
+
+- `SEOUL_OPEN_DATA_KEY`: 서울 열린데이터광장 인증키
+- `SEOUL_ONE_PERSON_PROGRAM_SERVICE_NAME=tbPartcptn`
+- `SEOUL_ELDERLY_FACILITY_SERVICE_NAME=GdTnBbs3`
+- `SEOUL_PUBLIC_RESERVATION_SERVICE_NAME=EPListPublicReservationInstitution`
+
+연동 API:
+
+- `[1인가구포털]서울시 1인가구 참여프로그램 현황`
+- `[강동구 어르신복지시설]서울시 강동구 어르신 복지시설 현황`
+- `[공공서비스예약 정보]서울시 은평구 시설대관 공공서비스예약 정보`
+
+구현 기준:
+
+- 공통 URL 패턴은 `http://openapi.seoul.go.kr:8088/{KEY}/json/{SERVICE_NAME}/1/100`
+- API별 응답 row를 `NormalizedBenefit`으로 변환해 기존 통합 검색 결과와 같은 카드 UI에서 표시
+- 검색어나 Gemini intent에 `서울` 또는 서울 25개 자치구명이 포함되면 서울 OpenData 검색 대상에 포함
+- 1인가구/청년/중장년/고령자/어르신/예약/시설/대관 같은 기능군 키워드로 호출할 서비스를 좁힘
+- HTML, 이미지 base64가 섞인 설명 필드는 정리해서 요약에 사용
+
+향후 확장:
+
+- 서울 외 지역 API는 동일한 registry + mapper 패턴으로 `regionalOpenData` 형태로 확장한다.
+- API 수가 많아지면 개별 API를 모두 직접 붙이기보다 기능군별 대표 API부터 연결하고, 검색 품질을 보면서 registry를 늘린다.
