@@ -1,6 +1,22 @@
 import type { BenefitSourceDescriptor, NormalizedBenefit } from '@/types/benefit';
 import type { WelfareItem } from '@/types/welfare';
 
+interface TextBenefitInput {
+  id: string;
+  source: BenefitSourceDescriptor;
+  title: string;
+  summary: string;
+  category: string;
+  target: string;
+  region: string;
+  period: string;
+  applyUrl: string;
+  eligibilityText: string;
+  keyword: string;
+  fetchedAt: string;
+  confidenceBoost?: number;
+}
+
 function textIncludes(item: WelfareItem, keyword: string) {
   if (!keyword.trim()) return true;
   const normalized = keyword.trim().toLowerCase();
@@ -43,6 +59,38 @@ export function normalizeWelfareItem(
     },
     confidence: scoreBenefit(item, keyword, source.id === 'bokjiro-local' ? 6 : 3),
     raw: item,
+  };
+}
+
+export function normalizeTextBenefit(input: TextBenefitInput): NormalizedBenefit {
+  const keywordScore = input.keyword && [
+    input.title,
+    input.summary,
+    input.category,
+    input.target,
+    input.region,
+  ].some((value) => value.toLowerCase().includes(input.keyword.toLowerCase())) ? 12 : 0;
+
+  return {
+    id: `${input.source.id}:${input.id}`,
+    sourceId: input.source.id,
+    sourceLabel: input.source.label,
+    sourceCategory: input.source.category,
+    title: input.title,
+    summary: input.summary || '상세 설명은 원문에서 확인이 필요합니다.',
+    category: input.category || '기타',
+    target: input.target || '전체',
+    region: input.region || '전국',
+    period: input.period || '확인 필요',
+    applyUrl: input.applyUrl || input.source.docsUrl || '',
+    eligibilityText: input.eligibilityText || input.target || input.summary,
+    evidence: {
+      sourceId: input.source.id,
+      sourceLabel: input.source.label,
+      url: input.applyUrl || input.source.docsUrl || '',
+      fetchedAt: input.fetchedAt,
+    },
+    confidence: Math.min(98, 70 + (input.confidenceBoost ?? 0) + keywordScore),
   };
 }
 

@@ -8,6 +8,7 @@ import {
   getActiveBenefitSources,
   getPlannedBenefitSources,
 } from '@/lib/benefits/sources';
+import { searchSeoulOpenDataSource } from '@/lib/benefits/seoulOpenData';
 import { resolveIntent } from '@/lib/ai/resolver';
 import type { BenefitIntent, BenefitSourceDescriptor, BenefitSourceResult, NormalizedBenefit } from '@/types/benefit';
 import type { WelfareItem } from '@/types/welfare';
@@ -112,7 +113,12 @@ async function searchSource(
   params: URLSearchParams,
   keyword: string,
   fetchedAt: string,
+  intent?: BenefitIntent,
 ): Promise<BenefitSourceResult> {
+  if (source.id === 'seoul-open-data') {
+    return searchSeoulOpenDataSource(source, params, keyword, fetchedAt, intent);
+  }
+
   const url = buildSourceUrl(origin, source, params);
   if (!url) return { source, items: [] };
 
@@ -132,12 +138,11 @@ export async function GET(req: NextRequest) {
   const params = new URLSearchParams(req.nextUrl.searchParams);
 
   const query = params.get('q') ?? '';
-  const explicitKeyword = params.get('apiKeyword') ?? '';
 
-  // 자연어 query 가 있고 apiKeyword 가 명시적으로 오지 않았을 때만 intent 파싱.
-  // URL 이 이미 조건을 강제한 경우엔 사용자 의도가 이미 확정된 것이므로 intent 는 참고용.
+  // query 가 있으면 항상 intent 를 파싱해서 UI 가 파싱 결과를 표시할 수 있게 응답에 포함.
+  // 파라미터 보정은 URL 에 이미 값이 있으면 override 하지 않음 (applyIntentToParams 내부의 !params.get 체크).
   let intent: BenefitIntent | undefined;
-  if (query.trim().length > 0 && explicitKeyword.length === 0) {
+  if (query.trim().length > 0) {
     intent = await resolveIntent(query);
     applyIntentToParams(params, intent);
   }
@@ -148,7 +153,7 @@ export async function GET(req: NextRequest) {
   const plannedSources = getPlannedBenefitSources();
 
   const sourceResults = await Promise.all(
-    activeSources.map((source) => searchSource(origin, source, params, keyword, fetchedAt)),
+    activeSources.map((source) => searchSource(origin, source, params, keyword, fetchedAt, intent)),
   );
   const items = dedupeNormalizedBenefits(sourceResults.flatMap((result) => result.items))
     .sort((a, b) => b.confidence - a.confidence);

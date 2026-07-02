@@ -40,10 +40,10 @@ export const BENEFIT_SOURCES: BenefitSourceDescriptor[] = [
     id: 'seoul-open-data',
     label: '서울 열린데이터광장',
     category: 'local',
-    status: 'planned',
+    status: 'active',
     envKey: 'SEOUL_OPEN_DATA_KEY',
     docsUrl: 'https://data.seoul.go.kr',
-    description: '서울/경기/인천 등 지자체별 청년, 주거, 출산, 돌봄 데이터.',
+    description: '서울시 1인가구, 취약계층, FAQ, 시설/예약성 데이터를 공통 OpenAPI 클라이언트로 조회합니다.',
   },
   {
     id: 'youth-policy',
@@ -111,7 +111,7 @@ export function getActiveBenefitSources(): BenefitSourceDescriptor[] {
 }
 
 export function getPlannedBenefitSources(): BenefitSourceDescriptor[] {
-  return BENEFIT_SOURCES.filter((source) => source.status === 'planned');
+  return BENEFIT_SOURCES.filter((source) => source.status === 'planned' || (source.status === 'active' && !isEnvKeySatisfied(source)));
 }
 
 export function findBenefitSource(id: string): BenefitSourceDescriptor | undefined {
