@@ -586,6 +586,27 @@ Notion 기준으로 `WelfareList_DB` 설계가 존재합니다.
   - `npm run build` 통과 (15/15 페이지, `/api/ai/intent` 라우트 확인)
   - Node 테스트 32/32 통과 (기존 24건 + AI intent 8건)
 
+### 2026.07.02 대화형 AI 답변 카드 (검색 결과 상단) — Perplexity 스타일
+
+방향: 사용자 검색 흐름을 "검색 결과 카드 나열" → "AI 대화형 답변 먼저, 근거 카드 하단" 으로 재구성. Gemini 가 사용자 질문과 검색 결과를 함께 받아 자연어로 요약·매칭 이유 설명·다음 행동 제안.
+
+- `src/lib/ai/answerParser.ts` (pure)
+  - `pickAnswerBenefits`: NormalizedBenefit[] → 프롬프트용 compact 후보(최대 8건, 필드 truncate)
+  - `buildAnswerPrompt`: 규칙 4~7문장 존댓말, [번호] 인용, 마지막에 다음 행동 제안
+  - `cleanAnswerText`: 코드블록 제거 · 공백 정리 · 길이 클램프
+- `src/lib/ai/answer.ts` (server-only) — Gemini `generateContent` 호출 (temperature 0.35, maxOutputTokens 800), 실패 시 규칙 기반 fallback 문구
+- `app/api/ai/answer/route.ts` — `POST { query, intent, benefits }` → `{ answer, source, usedBenefits }`
+- `/search` UI 재구성
+  - `AiAnswerCard` 컴포넌트 신설 (loading skeleton · 질문 pill · AI 답변 본문 · caveat)
+  - 결과 화면 상단에 대형 답변 카드, 하단에 기존 분석 요약/출처/intent chip/근거 카드
+  - 검색 완료 시점에 `/api/ai/answer` fetch, `AbortController` 로 중복 요청 방지
+- `app/globals.css` — `.ai-answer-card` 스타일 (그라디언트 배경, 질문 pill, shimmer skeleton)
+- Node 테스트 7건 (`scripts/test-ai-answer.mjs`) — truncate, pickAnswerBenefits cap, buildAnswerPrompt 필드 삽입, zero-benefit fallback, cleanAnswerText fence/공백/길이 처리
+- 검증
+  - `npm run lint` / `npm run build` 통과 (신규 route `/api/ai/answer` 확인)
+  - Node 테스트 58/58 통과
+  - Live: `POST /api/ai/answer` 로 Gemini source='ai' 응답 확인
+
 ### 2026.07.02 청년정책 어댑터 신버전 API (getPlcy JSON) 로 재작성
 
 방향: 사용자가 온통청년 API 활용신청 완료. 승인 대기 중이지만, 실제 신버전 endpoint 는 이전에 가정했던 `youthPlcyList.do` XML 이 아니라 `getPlcy` JSON. 승인 즉시 활성화되도록 어댑터를 신버전 스펙에 맞춰 재작성.

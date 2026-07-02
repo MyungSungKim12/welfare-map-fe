@@ -22,6 +22,7 @@ import {
   ShieldCheck,
   Sparkles,
   UserRound,
+  MessageSquareText,
 } from 'lucide-react';
 import { useBookmarks } from '@/hooks/useBookmarks';
 import { useBenefitSearch } from '@/hooks/useBenefitSearch';
@@ -61,6 +62,50 @@ const upcomingSources = [
   { label: '정부24', env: 'GOV24_API_KEY', status: '연동 예정' },
   { label: '보건복지', env: 'MOHW_HEALTH_API_KEY', status: '연동 예정' },
 ];
+
+interface AiAnswer {
+  answer: string;
+  source: 'ai' | 'fallback';
+}
+
+function AiAnswerCard({ answer, loading, query }: { answer: AiAnswer | null; loading: boolean; query: string }) {
+  if (loading) {
+    return (
+      <div className="ai-answer-card is-loading">
+        <div className="answer-head">
+          <MessageSquareText size={18} />
+          <span className="answer-eyebrow">AI 답변</span>
+          <span className="answer-source is-ai">Gemini 응답 생성 중…</span>
+        </div>
+        <div className="answer-skeleton">
+          <span />
+          <span />
+          <span />
+        </div>
+      </div>
+    );
+  }
+  if (!answer) return null;
+  const sourceLabel = answer.source === 'ai' ? 'Gemini AI' : '규칙 기반 fallback';
+  return (
+    <div className="ai-answer-card">
+      <div className="answer-head">
+        <MessageSquareText size={18} />
+        <span className="answer-eyebrow">AI 답변</span>
+        <span className={`answer-source is-${answer.source}`}>{sourceLabel}</span>
+      </div>
+      <p className="answer-question">Q. {query}</p>
+      <div className="answer-body">
+        {answer.answer.split(/\n{2,}/).map((paragraph, i) => (
+          <p key={i}>{paragraph.trim()}</p>
+        ))}
+      </div>
+      <p className="answer-caveat">
+        AI 답변은 참고용입니다. 아래 카드의 원문/신청 페이지에서 조건과 마감일을 반드시 확인하세요.
+      </p>
+    </div>
+  );
+}
 
 function IntentSummaryCard({ intent }: { intent: BenefitIntent }) {
   const stageLabel = intent.lifeStage ? LIFE_STAGE_LABELS[intent.lifeStage] : null;
@@ -180,6 +225,38 @@ export default function SearchPage() {
   const hasSearched = Boolean(keyword);
   const isResultsMode = activeMenu === 'ai' && hasSearched;
 
+  const [aiAnswer, setAiAnswer] = useState<AiAnswer | null>(null);
+  const [aiAnswerLoading, setAiAnswerLoading] = useState(false);
+
+  useEffect(() => {
+    if (!keyword || benefitSearch.isLoading) return;
+    const controller = new AbortController();
+    const run = async () => {
+      setAiAnswerLoading(true);
+      try {
+        const response = await fetch('/api/ai/answer', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            query: keyword,
+            intent: benefitSearch.intent,
+            benefits: benefitSearch.items.slice(0, 8),
+          }),
+          signal: controller.signal,
+        });
+        if (!response.ok) return;
+        const data = (await response.json()) as AiAnswer;
+        setAiAnswer(data);
+      } catch {
+        // 요청 취소 또는 네트워크 실패 — 조용히 skip
+      } finally {
+        setAiAnswerLoading(false);
+      }
+    };
+    run();
+    return () => controller.abort();
+  }, [keyword, benefitSearch.isLoading, benefitSearch.intent, benefitSearch.items]);
+
   useEffect(() => {
     const hydrate = async () => {
       setHistory(readSearchHistory());
@@ -283,6 +360,10 @@ export default function SearchPage() {
           />
           <button type="button" onClick={() => runSearch(query)}>다시 검색</button>
         </div>
+      )}
+
+      {!benefitSearch.isLoading && (aiAnswer || aiAnswerLoading) && (
+        <AiAnswerCard answer={aiAnswer} loading={aiAnswerLoading} query={keyword} />
       )}
 
       <div className="result-dashboard-grid">
