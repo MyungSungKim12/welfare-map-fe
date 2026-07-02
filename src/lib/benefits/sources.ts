@@ -49,10 +49,10 @@ export const BENEFIT_SOURCES: BenefitSourceDescriptor[] = [
     id: 'youth-policy',
     label: '온라인청년센터',
     category: 'youth',
-    status: 'planned',
+    status: 'active',
     envKey: 'YOUTH_POLICY_API_KEY',
     docsUrl: 'https://www.youthcenter.go.kr',
-    description: '청년정책, 청년 일자리, 청년 교육훈련 통합 검색.',
+    description: '청년정책, 청년 일자리, 청년 교육훈련 통합 검색. (YOUTH_POLICY_API_KEY 필요)',
   },
   {
     id: 'employment24',
@@ -92,18 +92,22 @@ export const BENEFIT_SOURCES: BenefitSourceDescriptor[] = [
   },
   {
     id: 'ai-web-search',
-    label: 'AI 웹/RAG 검색',
+    label: 'AI 웹 검색',
     category: 'web',
-    status: 'planned',
+    status: 'active',
     envKey: 'GEMINI_API_KEY',
     docsUrl: 'https://aistudio.google.com',
-    description: '공식 API 에 없는 공지, PDF, 신규 사업을 출처 기반으로 보완.',
+    description: 'Gemini google_search grounding 으로 공식 API 에 없는 공지, 신규 사업, PDF 를 출처 기반으로 보완.',
   },
 ];
 
 function isEnvKeySatisfied(descriptor: BenefitSourceDescriptor): boolean {
   if (!descriptor.envKey) return true;
-  return Boolean(process.env[descriptor.envKey]);
+  const value = process.env[descriptor.envKey];
+  if (!value) return false;
+  // ".env.example" 을 그대로 복사한 <...> 형태 placeholder 는 미설정으로 취급.
+  if (value.startsWith('<') && value.endsWith('>')) return false;
+  return true;
 }
 
 export function getActiveBenefitSources(): BenefitSourceDescriptor[] {

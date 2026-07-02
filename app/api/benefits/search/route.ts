@@ -9,6 +9,8 @@ import {
   getPlannedBenefitSources,
 } from '@/lib/benefits/sources';
 import { searchSeoulOpenDataSource } from '@/lib/benefits/seoulOpenData';
+import { searchYouthPolicySource } from '@/lib/benefits/youthPolicy';
+import { searchAiWebSource } from '@/lib/ai/websearch';
 import { resolveIntent } from '@/lib/ai/resolver';
 import type { BenefitIntent, BenefitSourceDescriptor, BenefitSourceResult, NormalizedBenefit } from '@/types/benefit';
 import type { WelfareItem } from '@/types/welfare';
@@ -117,6 +119,12 @@ async function searchSource(
 ): Promise<BenefitSourceResult> {
   if (source.id === 'seoul-open-data') {
     return searchSeoulOpenDataSource(source, params, keyword, fetchedAt, intent);
+  }
+  if (source.id === 'youth-policy') {
+    return searchYouthPolicySource(source, params, keyword, fetchedAt, intent);
+  }
+  if (source.id === 'ai-web-search') {
+    return searchAiWebSource(source, params, keyword, fetchedAt, intent);
   }
 
   const url = buildSourceUrl(origin, source, params);

@@ -543,6 +543,32 @@ Notion 기준으로 `WelfareList_DB` 설계가 존재합니다.
   - `npm run build` 통과 (15/15 페이지, `/api/ai/intent` 라우트 확인)
   - Node 테스트 32/32 통과 (기존 24건 + AI intent 8건)
 
+### 2026.07.02 AI 웹 검색 grounding 소스 활성화 + 청년정책 어댑터 추가
+
+방향: 사용자가 요청한 "폭넓은 검색" 을 위해 Gemini google_search grounding 을 정식 검색 소스로 활성화. 동시에 청년정책 어댑터를 코드로 준비해 API 키 확보 시 즉시 활성화 가능한 상태로.
+
+- AI 웹 검색 소스
+  - `src/lib/ai/websearchParser.ts` (pure) — prompt builder, JSON 응답 파싱, groundingChunks fallback
+  - `src/lib/ai/websearch.ts` (server-only) — Gemini `tools: [{ google_search: {} }]` 호출 + normalizeTextBenefit 변환
+  - `sources.ts`: `ai-web-search` status → active
+  - `/api/benefits/search`: source.id === 'ai-web-search' 분기 추가
+  - Node 테스트 8건 (`scripts/test-ai-websearch.mjs`) — prompt, JSON 추출, chunks fallback, cap 8건
+  - Live 검증: "청년 월세 지원 최근 사업 알려줘" → gov.kr/housing.seoul.go.kr 등 공식 도메인 5건 반환
+- 온라인청년센터 청년정책 어댑터
+  - `src/lib/benefits/youthPolicy.ts` — XML 파싱, intent 매칭 (youth/newlywed lifeStage 또는 청년/전세대출/취업 등 키워드)
+  - `sources.ts`: `youth-policy` status → active (env 미설정 시 자동 planned)
+  - `/api/benefits/search`: source.id === 'youth-policy' 분기 추가
+  - Node 테스트 7건 (`scripts/test-youth-policy.mjs`) — 매칭 조건, XML 파싱, HTML 디코딩
+  - 활성화 조건: `YOUTH_POLICY_API_KEY` 를 공공데이터포털에서 발급 후 `.env.local` 에 실제 값 입력
+- placeholder 감지 개선
+  - `sources.ts`의 `isEnvKeySatisfied` 가 `<...>` 형태 placeholder 를 미설정으로 취급
+  - `.env.example` 을 그대로 복사한 상태에서는 소스가 자동 planned 로 남음
+- 검증
+  - `npm run lint` 통과
+  - `npm run build` 통과 (13/13 정적 페이지)
+  - Node 테스트 47/47 통과 (기존 32 + AI websearch 8 + youth policy 7)
+  - 실 API 검증: active 4 (bokjiro-local, bokjiro-national, seoul-open-data, ai-web-search), planned 6
+
 ### 2026.07.02 지역 오픈데이터 공통 커넥터 추가
 
 방향: 서울 열린데이터광장 API를 개별 API별로 하드코딩하지 않고, 전국 확장 가능한 지역 오픈데이터 connector 패턴의 첫 구현으로 추가. 최종 목표는 서울 한정이 아니라 사용자 현재 위치 기반으로 각 지역의 복지/프로그램/시설/FAQ 데이터를 통합 검색하는 구조.
